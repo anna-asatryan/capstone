@@ -153,6 +153,7 @@ capstone/
 ├── README.md                       # Project documentation
 ├── requirements.txt                # Dependencies
 └── venv/                           # Local environment 
+```
 
 ---
 
