@@ -106,59 +106,53 @@ Interaction structure is treated as a **post-model evaluation layer**, allowing 
 
 ## Repository Structure
 
+```text
+
 capstone/
 ├── outputs/
-│   ├── case_design.pdf            # Exported summary of case selection (for reporting / inspection)
-│   ├── modeling.pdf               # Exported modeling results (metrics, comparisons, calibration)
-│   ├── eda.pdf                    # Exported EDA summary (feature engineering, difficulty construction)
+│   ├── case_design.pdf             # Exported summary of case selection
+│   ├── modeling.pdf                # Model results (metrics, calibration)
+│   └── eda.pdf                     # EDA summary (features, difficulty)
 │
 ├── artifacts/
-│   ├── protocol_rotation.csv      # Precomputed counterbalancing of protocols across participants
-│   ├── final_cases.csv            # Final 18 experimental cases used in DSS
-│   │                               
-│   └── test_predictions.parquet   # Frozen model predictions on test set
-│                                  
+│   ├── protocol_rotation.csv       # Counterbalancing scheme
+│   ├── final_cases.csv             # Final 18 experimental cases
+│   └── test_predictions.parquet    # Frozen model predictions
 │
 ├── data/
 │   ├── raw/
-│   │   ├── loan.csv               # Raw LendingClub dataset (downloaded manually, not versioned)
-│   │   └── LCDataDictionary.xlsx  # Feature descriptions from source dataset
+│   │   ├── loan.csv                # Raw dataset (not versioned)
+│   │   └── LCDataDictionary.xlsx   # Feature descriptions
 │   │
 │   └── processed/
-│       └── loan_v1.csv            # Cleaned dataset with engineered features + difficulty labels
-│                                   # Output of EDA pipeline, input to modeling
+│       └── loan_v1.csv             # Cleaned dataset (EDA output)
 │
 ├── paper/
-│   └── CapstonePaperDraft.pdf     # IEEE-style draft of the research paper
+│   └── CapstonePaperDraft.pdf      # IEEE-style paper draft
 │
 ├── codes/
 │   ├── notebooks/
-│   │   ├── case_design.ipynb      # Selects experimental cases (difficulty × correctness + confidence spread)
-│   │   ├── modeling.ipynb         # Trains models, applies calibration, evaluates metrics
-│   │   └── eda.ipynb              # Data cleaning, feature engineering, difficulty computation
+│   │   ├── eda.ipynb               # Data cleaning + feature engineering
+│   │   ├── modeling.ipynb          # Training + calibration + evaluation
+│   │   └── case_design.ipynb       # Case selection logic
 │   │
-│   ├── feature_config.py          # Central definition of feature groups (NUM_COLS, CAT_COLS)
-│   │                               # Ensures consistency across pipeline
-│   │
-│   ├── data_prep.py               # Reusable data loading + preprocessing logic
-│   │                      
+│   ├── feature_config.py           # Feature definitions (NUM_COLS, CAT_COLS)
+│   ├── data_prep.py                # Data loading + preprocessing
+│   ├── __init__.py     
 │   │
 │   └── visualizations/
-│       ├── difficulty_interactions.png  
-│       ├── normative_agreement.png      
-│       ├── feature_shift.png            
-│       ├── confusion_matrices.png     
-│       ├── prob_distribution.png     
-│       └── calibration_curves.png      
+│       ├── difficulty_interactions.png
+│       ├── normative_agreement.png
+│       ├── feature_shift.png
+│       ├── confusion_matrices.png
+│       ├── prob_distribution.png
+│       └── calibration_curves.png
 │
 ├── models/
-│   └── __init__.py           
 │
-├── README.md                     # Project documentation (setup, pipeline, methodology)
-│
-├── requirements.txt              # Python dependencies for reproducibility
-│
-└── venv/                         # Local virtual environment (not required for reproduction)
+├── README.md                       # Project documentation
+├── requirements.txt                # Dependencies
+└── venv/                           # Local environment 
 
 ---
 
