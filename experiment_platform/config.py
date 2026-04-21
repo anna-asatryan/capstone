@@ -315,11 +315,11 @@ You are acting as a loan officer at a bank. For each application, you will decid
 
 ### Cost Structure
 
-Not all mistakes are equal:
-- If you **approve** a loan and the borrower **defaults** → your bank loses **$5,000**
-- If you **reject** a loan and the borrower **would have repaid** → your bank loses **$1,000**
+The bank evaluates your decisions using a simplified cost model:
+- Approving a loan that **defaults** costs **$5,000**
+- Rejecting a loan that **would have been repaid** costs **$1,000**
 
-Approving a bad loan costs **5 times more** than rejecting a good one.
+The key insight: approving a bad loan is **5 times more costly** than rejecting a good one.
 
 ### Three Types of Rounds
 
@@ -497,8 +497,7 @@ PERFORMANCE_MESSAGES = {
         "Good work — you performed better than most participants would on this task."
     ),
     "fair": (
-        "Thanks for your careful effort. This task is difficult; even expert loan "
-        "officers rarely achieve the optimal strategy."
+        "Thanks for your careful effort. This task is difficult; even skilled practitioners rarely achieve the optimal strategy."
     ),
     "low": (
         "Thank you for participating. This task is genuinely hard and the cost structure "
