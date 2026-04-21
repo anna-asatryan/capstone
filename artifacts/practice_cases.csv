@@ -1,0 +1,3 @@
+case_id,loan_amnt,term,int_rate,dti,revol_util,home_ownership,purpose,log_annual_inc,credit_history_years,y_true,pred_prob,difficulty_score,difficulty_tier,model_pred_class,correct,confidence,conf_bin,fp,fn,model_decision,optimal_decision,model_optimal,case_position,block
+731479,5000,36 months,8.24,1.05,5.2,RENT,moving,11.561725152903833,24.752908966461327,0,0.0586145648312611,0.0892684328552937,easy,0,1,0.9413854351687388,high,0,0,1,1,1,-2,practice
+252416,22000,60 months,19.89,31.15,51.6,RENT,debt_consolidation,10.691967639914864,15.501711156741958,1,0.5781057810578106,0.7817411280861005,hard,1,1,0.5781057810578106,low,0,0,0,0,1,-1,practice

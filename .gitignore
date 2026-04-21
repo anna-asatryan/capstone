@@ -29,3 +29,11 @@ Thumbs.db
 
 
 *.log
+
+CapstoneInfo/
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+__pycache__/
+*.pyc
