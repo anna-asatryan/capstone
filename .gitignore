@@ -1,39 +1,100 @@
+# =========================================================
+# Python environments and local config
+# =========================================================
+.venv/
 venv/
-.env
+env/
 
-# Raw data (too large)
+.env
+.env.*
+!.env.example
+
+# Streamlit secrets
+.streamlit/secrets.toml
+**/.streamlit/secrets.toml
+**/secrets.toml
+
+# =========================================================
+# Python cache / build artifacts
+# =========================================================
+__pycache__/
+*.py[cod]
+*.pyd
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# =========================================================
+# Jupyter
+# =========================================================
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# =========================================================
+# OS / editor
+# =========================================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# =========================================================
+# Logs
+# =========================================================
+*.log
+
+# =========================================================
+# Local/private project info
+# =========================================================
+CapstoneInfo/
+
+# =========================================================
+# Data (large / non-versioned)
+# Keep placeholders only
+# =========================================================
 data/raw/*
 !data/raw/.gitkeep
 
 data/processed/*
 !data/processed/.gitkeep
 
+# Optional exported experiment data
+data/experiment/*
+!data/experiment/.gitkeep
 
-.ipynb_checkpoints/
-**/.ipynb_checkpoints/
+# =========================================================
+# Generated artifacts
+# Keep frozen artifacts if they are part of the canonical repo
+# =========================================================
+artifacts/analysis/
+artifacts/*.parquet
+artifacts/*.csv
+artifacts/*.log
 
+# If you later create a frozen lock under artifacts/cases/, do NOT ignore it:
+# !artifacts/cases/
+# !artifacts/cases/**
+# !artifacts/cases.lock.json
 
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
+# =========================================================
+# Quarto / paper rendering artifacts
+# Track source files, ignore generated files
+# =========================================================
+.quarto/
+**/.quarto/
 
+*_files/
+**/*_files/
 
-.DS_Store
-Thumbs.db
+# Common rendered outputs
+*.html
+*.pdf
+*.docx
 
-
-.vscode/
-.idea/
-
-
-*.log
-
-CapstoneInfo/
-
-# Streamlit secrets
-.streamlit/secrets.toml
-
-__pycache__/
-*.pyc
