@@ -15,5 +15,5 @@ ALTER TABLE participants
 -- Verification
 SELECT column_name, data_type
 FROM information_schema.columns
-WHERE table_name = 'participants'
-  AND column_name IN ('self_reported_reliance', 'ai_surprise_strategy');
+WHERE table_name = 'participants' 
+AND column_name IN ('self_reported_reliance', 'ai_surprise_strategy');

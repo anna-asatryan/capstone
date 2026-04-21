@@ -1,3 +1,6 @@
+drag experiment_platform
+
+
 # Interaction Structure in AI-Assisted Decision Support Systems
 
 **Author:** Anna Asatryan  
