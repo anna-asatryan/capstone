@@ -24,7 +24,7 @@ def get_client() -> Client:
     (the client itself is not participant state)."""
     try:
         url = st.secrets["supabase"]["url"]
-        key = st.secrets["supabase"]["anon_key"]
+        key = st.secrets["supabase"]["secret_key"]
     except Exception as exc:
         raise RuntimeError(
             "Supabase credentials are not configured. Copy "

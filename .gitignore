@@ -98,3 +98,4 @@ artifacts/*.log
 *.pdf
 *.docx
 
+run.py

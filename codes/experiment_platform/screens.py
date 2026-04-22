@@ -77,6 +77,11 @@ from ui_components import (
     render_probability_slider_mandatory,
     render_probability_slider_prefilled,
     render_progress_line,
+    render_response_card_header,
+    render_sidebar_reference,
+    render_step_divider,
+    render_step_label,
+    render_trial_header,
     submit_button_with_gate,
 )
 from utils import (
@@ -407,14 +412,26 @@ def trial_screen() -> None:
     protocol = trial["protocol"]
     seq = st.session_state.trial_sequence
 
-    # Progress line
-    if trial["block"] == "practice":
+    # Sidebar quick-reference
+    is_practice = trial["block"] == "practice"
+    render_sidebar_reference(protocol, is_practice=is_practice)
+
+    # Sticky trial header
+    if is_practice:
         practice_n = idx + 3            # -2 -> 1, -1 -> 2
-        render_progress_line(f"Practice trial {practice_n} of 2")
+        render_trial_header(
+            protocol,
+            is_practice=True,
+            practice_n=practice_n,
+        )
     else:
         block_num = BLOCK_NUMBER[trial["block"]]
         pos = _block_position(seq, idx, trial["block"])
-        render_progress_line(f"Application {pos} of 6 — Round {block_num} of 3")
+        render_trial_header(
+            protocol,
+            block_num=block_num,
+            pos=pos,
+        )
         render_overall_progress(idx)
 
     render_case_card(case, participant_id=str(st.session_state.get("participant_id", "")))
@@ -444,19 +461,35 @@ def _render_single_step(idx: int, trial: dict, protocol: str) -> None:
     if protocol == "ai_first":
         render_ai_panel(case)
 
-    decision = render_decision_buttons(f"trial_{idx}_decision_final")
-    prob = render_probability_slider_mandatory(
-        f"trial_{idx}_prob_final",
-        "What is the probability that this borrower will default?",
-    )
+    with st.container(border=True):
+        render_response_card_header()
 
-    submitted = submit_button_with_gate(
-        state_key=f"trial_{idx}_submit",
-        label="Submit decision",
-        decision=decision,
-        prob=prob,
-        load_time_ms=st.session_state[load_key],
-    )
+        # Step 1 — Decision
+        render_step_label(1, "Decision")
+        decision = render_decision_buttons(f"trial_{idx}_decision_final")
+
+        render_step_divider()
+
+        # Step 2 — Probability estimate (disabled until decision is set)
+        prob_disabled = decision is None
+        render_step_label(2, "Probability of Default", active=not prob_disabled)
+        prob = render_probability_slider_mandatory(
+            f"trial_{idx}_prob_final",
+            "Estimated probability this borrower will default:",
+            disabled=prob_disabled,
+        )
+
+        render_step_divider()
+
+        # Step 3 — Submit
+        render_step_label(3, "Submit", active=not (decision is None or prob is None))
+        submitted = submit_button_with_gate(
+            state_key=f"trial_{idx}_submit",
+            label="Submit Decision",
+            decision=decision,
+            prob=prob,
+            load_time_ms=st.session_state[load_key],
+        )
 
     if submitted:
         end_ms = now_ms()
@@ -486,19 +519,36 @@ def _render_human_first_step1(idx: int, trial: dict) -> None:
     if load_key not in st.session_state:
         st.session_state[load_key] = now_ms()
 
-    decision = render_decision_buttons(f"trial_{idx}_decision_init")
-    prob = render_probability_slider_mandatory(
-        f"trial_{idx}_prob_init",
-        "What is the probability that this borrower will default?",
-    )
+    with st.container(border=True):
+        render_response_card_header()
 
-    submitted = submit_button_with_gate(
-        state_key=f"trial_{idx}_step1_submit",
-        label="Submit initial decision",
-        decision=decision,
-        prob=prob,
-        load_time_ms=st.session_state[load_key],
-    )
+        # Step 1 — Decision
+        render_step_label(1, "Your Initial Decision")
+        decision = render_decision_buttons(f"trial_{idx}_decision_init")
+
+        render_step_divider()
+
+        # Step 2 — Probability (disabled until decision set)
+        prob_disabled = decision is None
+        render_step_label(2, "Probability of Default", active=not prob_disabled)
+        prob = render_probability_slider_mandatory(
+            f"trial_{idx}_prob_init",
+            "Estimated probability this borrower will default:",
+            disabled=prob_disabled,
+        )
+
+        render_step_divider()
+
+        # Step 3 — Submit initial
+        render_step_label(3, "Submit Initial Assessment", active=not (decision is None or prob is None))
+        submitted = submit_button_with_gate(
+            state_key=f"trial_{idx}_step1_submit",
+            label="Submit Initial Assessment",
+            decision=decision,
+            prob=prob,
+            load_time_ms=st.session_state[load_key],
+        )
+
     if submitted:
         now = now_ms()
         # Persist widget values BEFORE rerun — Streamlit clears widget keys
@@ -532,21 +582,36 @@ def _render_human_first_step2(idx: int, trial: dict) -> None:
     render_locked_step1_summary(decision_init, prob_init_float)
     render_ai_panel(case)
 
-    decision = render_decision_buttons(f"trial_{idx}_decision_final")
-    prob = render_probability_slider_prefilled(
-        f"trial_{idx}_prob_final",
-        "What is the probability that this borrower will default? (You may revise.)",
-        initial_percent,
-    )
+    with st.container(border=True):
+        render_response_card_header()
 
-    step2_load = st.session_state[f"trial_{idx}_step2_load_time"]
-    submitted = submit_button_with_gate(
-        state_key=f"trial_{idx}_step2_submit",
-        label="Submit final decision",
-        decision=decision,
-        prob=prob,
-        load_time_ms=step2_load,
-    )
+        # Step 1 — Revise decision (pre-filled from Step 1)
+        render_step_label(1, "Revise Your Decision  (optional)")
+        decision = render_decision_buttons(f"trial_{idx}_decision_final")
+
+        render_step_divider()
+
+        # Step 2 — Revise probability (pre-filled, always enabled)
+        render_step_label(2, "Revise Probability of Default  (optional)")
+        prob = render_probability_slider_prefilled(
+            f"trial_{idx}_prob_final",
+            "Estimated probability this borrower will default:",
+            initial_percent,
+        )
+
+        render_step_divider()
+
+        # Step 3 — Submit final
+        render_step_label(3, "Submit Final Decision", active=True)
+        step2_load = st.session_state[f"trial_{idx}_step2_load_time"]
+        submitted = submit_button_with_gate(
+            state_key=f"trial_{idx}_step2_submit",
+            label="Submit Final Decision",
+            decision=decision,
+            prob=prob,
+            load_time_ms=step2_load,
+        )
+
     if submitted:
         end_ms = now_ms()
         time_to_final = end_ms - step2_load

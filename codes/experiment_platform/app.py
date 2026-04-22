@@ -128,13 +128,25 @@ def main() -> None:
         page_title=EXPERIMENT_TITLE,
         page_icon="🏦",
         layout="centered",
-        initial_sidebar_state="collapsed",
+        initial_sidebar_state="expanded",
     )
 
     sid = _ensure_session_id()
     _resume_or_start(sid)
 
     phase = st.session_state.get("phase", "consent")
+
+    # On non-trial screens, render a minimal sidebar so participants know
+    # the reference panel will appear during the scored trials.
+    if phase not in ("trial", "practice_feedback"):
+        with st.sidebar:
+            st.markdown(
+                "**Loan Decision Study**",
+            )
+            st.caption(
+                "A quick-reference panel will appear here during the scored trials."
+            )
+
     screen = PHASE_ROUTER.get(phase, consent_screen)
     screen()
 
