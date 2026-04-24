@@ -1,18 +1,18 @@
-# Syncs codes/summary_app/ → standalone analysis-app repo.
+# Syncs codes/summary_app/ → standalone summary-app repo.
 # This repo will be activated once 100+ participant data is collected.
 # Until then the workflow runs but the target repo stays minimal.
 #
 # SETUP REQUIRED (one-time):
-#   1. Create target repo: github.com/anna-asatryan/capstone-analysis-app
-#   2. Generate a PAT with repo scope → add as secret ANALYSIS_SYNC_PAT
+#   1. Create target repo: github.com/anna-asatryan/capstone-summary-app
+#   2. Generate a PAT with repo scope → add as secret SUMMARY_SYNC_PAT
 #      (Settings → Secrets → Actions in the capstone repo)
 #
 # When experiment data arrives:
 #   - Export CSVs from Supabase into artifacts/frozen/experiment_exports/
-#   - Run `python run.py --mode frozen` to generate analysis outputs
+#   - Run `python run.py --mode frozen` to generate summary outputs
 #   - Commit updated codes/summary_app/ → this workflow syncs automatically
 
-name: Sync analysis app to standalone repo
+name: Sync summary app to standalone repo
 
 on:
   push:
@@ -30,11 +30,11 @@ jobs:
       - name: Checkout capstone (source)
         uses: actions/checkout@v4
 
-      - name: Checkout analysis-app (target)
+      - name: Checkout summary-app (target)
         uses: actions/checkout@v4
         with:
-          repository: anna-asatryan/capstone-analysis-app
-          token: ${{ secrets.ANALYSIS_SYNC_PAT }}
+          repository: anna-asatryan/capstone-summary-app
+          token: ${{ secrets.SUMMARY_SYNC_PAT }}
           path: target
 
       - name: Sync summary app into target root
@@ -50,14 +50,14 @@ jobs:
 
       - name: Commit and push if changed
         env:
-          GH_TOKEN: ${{ secrets.ANALYSIS_SYNC_PAT }}
+          GH_TOKEN: ${{ secrets.SUMMARY_SYNC_PAT }}
         run: |
           cd target
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add .
           git diff --cached --quiet && echo "No changes to sync." && exit 0
-          git commit -m "Sync analysis app from capstone [skip ci]"
+          git commit -m "Sync summary app from capstone [skip ci]"
           CLEAN_TOKEN=$(printf "%s" "$GH_TOKEN")
-          git remote set-url origin "https://${CLEAN_TOKEN}@github.com/anna-asatryan/capstone-analysis-app.git"
+          git remote set-url origin "https://${CLEAN_TOKEN}@github.com/anna-asatryan/capstone-summary-app.git"
           git push origin HEAD:main
