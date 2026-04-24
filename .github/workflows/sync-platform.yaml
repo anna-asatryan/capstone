@@ -1,0 +1,60 @@
+# Syncs codes/experiment_platform/ → standalone experiment-platform repo.
+# The standalone repo is the one participants use; this main repo stays
+# the canonical source. Any push to codes/experiment_platform/ on main
+# is automatically mirrored.
+#
+# SETUP REQUIRED (one-time):
+#   1. Create target repo: github.com/anna-asatryan/capstone-experiment-platform
+#   2. Generate a PAT with repo scope → add as secret PLATFORM_SYNC_PAT
+#      (Settings → Secrets → Actions in the capstone repo)
+
+name: Sync experiment platform to standalone repo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "codes/experiment_platform/**"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout capstone (source)
+        uses: actions/checkout@v4
+
+      - name: Checkout experiment-platform (target)
+        uses: actions/checkout@v4
+        with:
+          repository: anna-asatryan/capstone-experiment-platform
+          token: ${{ secrets.PLATFORM_SYNC_PAT }}
+          path: target
+
+      - name: Sync platform into target root
+        run: |
+          rsync -av --delete \
+            --exclude ".git/" \
+            --exclude ".github/" \
+            --exclude ".gitignore" \
+            --exclude "__pycache__/" \
+            --exclude "*.pyc" \
+            --exclude ".streamlit/secrets.toml" \
+            --exclude "database/" \
+            codes/experiment_platform/ \
+            target/
+
+      - name: Commit and push if changed
+        env:
+          GH_TOKEN: ${{ secrets.PLATFORM_SYNC_PAT }}
+        run: |
+          cd target
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add .
+          git diff --cached --quiet && echo "No changes to sync." && exit 0
+          git commit -m "Sync experiment platform from capstone [skip ci]"
+          CLEAN_TOKEN=$(printf "%s" "$GH_TOKEN")
+          git remote set-url origin "https://${CLEAN_TOKEN}@github.com/anna-asatryan/capstone-experiment-platform.git"
+          git push origin HEAD:main

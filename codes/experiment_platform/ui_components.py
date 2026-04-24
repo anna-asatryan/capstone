@@ -9,7 +9,6 @@ trials don't collide in st.session_state.
 
 from __future__ import annotations
 
-import hashlib
 from typing import Optional
 
 import streamlit as st
@@ -472,14 +471,11 @@ def render_step_divider() -> None:
 
 def render_case_card(case: dict, participant_id: str = "") -> None:
     """
-    Render a loan application as a prose description.
+    Render a loan application as a standardized prose description.
 
-    To reduce monotony across 18 near-identically-structured trials,
-    the opening sentence uses one of three equivalent phrasings. The
-    variant is chosen deterministically per (participant_id, case_id),
-    so a given participant sees the same case with the same wording
-    on any reload, but different participants see different phrasings.
-    The information content is identical across variants.
+    `participant_id` is accepted for backward compatibility with existing
+    call sites, but the wording is now fixed across all participants and
+    trials to avoid introducing unnecessary variation into the experiment.
     """
     income_dollars = income_from_log(case["log_annual_inc"])
     inc_desc = income_descriptor(income_dollars)
@@ -491,34 +487,16 @@ def render_case_card(case: dict, participant_id: str = "") -> None:
     title_position = case["case_position"]
     title = f"Loan Application #{title_position}" if title_position > 0 else "Practice Application"
 
-    # Deterministic template selection per (participant, case).
-    # Same participant + same case -> same template on every render.
-    seed = hashlib.md5(f"{participant_id}:{case['case_id']}".encode()).hexdigest()
-    variant = int(seed, 16) % 3
-
     loan_amnt = f'<b>${case["loan_amnt"]:,}</b>'
     int_rate = f'<b>{case["int_rate"]:.2f}%</b>'
     term = f'<b>{case["term"]}</b>'
     purp_b = f'<b>{purp}</b>'
 
-    if variant == 0:
-        opener = (
-            f'<p>The applicant is requesting a {loan_amnt} loan at an interest '
-            f'rate of {int_rate}, to be repaid over {term}. The purpose of the '
-            f'loan is {purp_b}.</p>'
-        )
-    elif variant == 1:
-        opener = (
-            f'<p>A borrower has applied for a {loan_amnt} loan at {int_rate} '
-            f'interest, with a {term} repayment term. They intend to use the '
-            f'funds for {purp_b}.</p>'
-        )
-    else:  # variant == 2
-        opener = (
-            f'<p>This application is for a {loan_amnt} loan, priced at '
-            f'{int_rate} and structured over {term}. The stated purpose '
-            f'is {purp_b}.</p>'
-        )
+    opener = (
+        f'<p>The applicant is requesting a {loan_amnt} loan at an interest '
+        f'rate of {int_rate}, to be repaid over {term}. The purpose of the '
+        f'loan is {purp_b}.</p>'
+    )
 
     html = (
         f'<div class="case-card">'

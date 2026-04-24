@@ -1,0 +1,65 @@
+{
+  "version": "1.0",
+  "created_at": "2026-04-22T23:21:54.001700+00:00",
+  "mode": "frozen",
+  "git_commit": "d77f40aeca2103444aad11470de216de33f9ad14",
+  "exact_rebuild_guaranteed": false,
+  "official_deterministic_path": true,
+  "source_files": [
+    "artifacts/test_predictions.parquet",
+    "artifacts/final_cases.csv",
+    "artifacts/practice_cases.csv",
+    "artifacts/protocol_rotation.csv",
+    "codes/notebooks/eda.ipynb",
+    "codes/notebooks/modeling.ipynb",
+    "codes/notebooks/case_design.ipynb"
+  ],
+  "seeds": {
+    "global_numpy_seed": 42,
+    "selection_random_state": 42,
+    "block_assignment_random_state": 42,
+    "practice_case_random_state": 42
+  },
+  "selection_parameters": {
+    "candidate_filter": {
+      "pred_prob_min_exclusive": 0.05,
+      "pred_prob_max_exclusive": 0.95,
+      "exclude_purpose": "other"
+    },
+    "per_difficulty_correct_cell": 3,
+    "minimum_probability_distance": 0.02,
+    "difficulty_smoothing_alpha": 50,
+    "difficulty_thresholds": [
+      0.33,
+      0.66
+    ],
+    "tau": 0.16666666666666666,
+    "block_labels": [
+      "block_1",
+      "block_2",
+      "block_3"
+    ]
+  },
+  "artifacts": {
+    "final_cases.csv": {
+      "sha256": "2477932e1389446c889877bf8b7331082f1bf3f76bf411d9e335c78fe21818ef",
+      "bytes": 3467
+    },
+    "practice_cases.csv": {
+      "sha256": "e3a1f702bf9c535ef4526cdfb72b0cf82632f59a3c80e0162b1f98dda21f2c8b",
+      "bytes": 650
+    },
+    "protocol_rotation.csv": {
+      "sha256": "e03f58981e8e44f0e2b388ba0a7617b839bb6ee7842a2c0457b3a126dcbd3210",
+      "bytes": 192
+    },
+    "candidate_pool_scored.parquet": {
+      "sha256": "8e9ca67675048c05709c99efd5188b70250ce43cc6136a1cb8ea5f0223da750d",
+      "bytes": 8310849
+    }
+  },
+  "notes": [
+    "The official deterministic reproduction path begins at this frozen bundle, not at final_cases.csv alone.",
+    "Upstream reconstruction from raw data remains best-effort because the original notebook-driven selection workflow was not fully serialized as a deterministic build graph."
+  ]
+}

@@ -336,7 +336,6 @@ For each loan, you will:
 
 You will first complete 2 practice trials with feedback, then 18 scored trials.
 
-**Your goal: minimize total losses for your bank.**
 """
 
 # -----------------------------------------------------------------------------

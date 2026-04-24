@@ -2,6 +2,7 @@
 # Python environments and local config
 # =========================================================
 .venv/
+.venv-*/
 venv/
 env/
 
@@ -77,11 +78,8 @@ artifacts/analysis/
 artifacts/*.parquet
 artifacts/*.csv
 artifacts/*.log
-
-# If you later create a frozen lock under artifacts/cases/, do NOT ignore it:
-# !artifacts/cases/
-# !artifacts/cases/**
-# !artifacts/cases.lock.json
+!artifacts/frozen/
+!artifacts/frozen/**
 
 # =========================================================
 # Quarto / paper rendering artifacts
@@ -97,5 +95,3 @@ artifacts/*.log
 *.html
 *.pdf
 *.docx
-
-run.py

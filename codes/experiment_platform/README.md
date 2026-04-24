@@ -81,7 +81,7 @@ touch `config.py`.
    `quiz_responses`), indexes, and Row-Level-Security policies.
 3. From **Project Settings → API**, copy two values:
    - **Project URL** (`https://<ref>.supabase.co`)
-   - **anon public key**
+   - **secret key**
 
 > **Upgrading from an earlier version of this platform?** If your Supabase
 > project was created before the reflection screen was added, run
@@ -93,7 +93,7 @@ touch `config.py`.
 cd experiment_platform
 cp .streamlit/secrets.toml.template .streamlit/secrets.toml
 ```
-Edit `.streamlit/secrets.toml` and paste in your Supabase URL and anon key.
+Edit `.streamlit/secrets.toml` and paste in your Supabase URL and secret key.
 **Do not commit `secrets.toml`.**
 
 ### 3.3 Install + run
@@ -120,7 +120,7 @@ the moment the user clicks **Continue** on the consent screen.
    ```toml
    [supabase]
    url = "https://YOUR-PROJECT-REF.supabase.co"
-   anon_key = "YOUR-ANON-KEY"
+   secret_key = "YOUR-SECRET-KEY"
    ```
 4. Deploy. The public URL is what you share with participants.
 

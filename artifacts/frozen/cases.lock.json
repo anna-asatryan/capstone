@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "created_at": "2026-04-22T23:21:54.001700+00:00",
+  "git_commit": "d77f40aeca2103444aad11470de216de33f9ad14",
+  "files": {
+    "final_cases.csv": {
+      "sha256": "2477932e1389446c889877bf8b7331082f1bf3f76bf411d9e335c78fe21818ef",
+      "bytes": 3467
+    },
+    "practice_cases.csv": {
+      "sha256": "e3a1f702bf9c535ef4526cdfb72b0cf82632f59a3c80e0162b1f98dda21f2c8b",
+      "bytes": 650
+    },
+    "protocol_rotation.csv": {
+      "sha256": "e03f58981e8e44f0e2b388ba0a7617b839bb6ee7842a2c0457b3a126dcbd3210",
+      "bytes": 192
+    },
+    "candidate_pool_scored.parquet": {
+      "sha256": "8e9ca67675048c05709c99efd5188b70250ce43cc6136a1cb8ea5f0223da750d",
+      "bytes": 8310849
+    }
+  }
+}
