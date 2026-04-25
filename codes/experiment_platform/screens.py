@@ -341,7 +341,7 @@ def practice_feedback_screen() -> None:
     opt_cost = trial_cost(opt_dec, y)
     is_optimal = your_cost == opt_cost
 
-    outcome_text = "**defaulted on the loan**" if y == 1 else "**repaid the loan**"
+    outcome_text = "<strong>defaulted on the loan</strong>" if y == 1 else "<strong>repaid the loan</strong>"
     your_dec_text = decision_label(decision)
     opt_dec_text = decision_label(opt_dec)
     pred_pct = format_percent(pred)
@@ -359,14 +359,14 @@ def practice_feedback_screen() -> None:
         )
     elif decision == 1 and y == 1:
         explanation = (
-            f"With a {pred_pct} predicted chance of default, **rejection** would have "
-            "avoided the **$5,000** default loss."
+            f"With a {pred_pct} predicted chance of default, <strong>rejection</strong> would have "
+            "avoided the <strong>$5,000</strong> default loss."
         )
     else:
         # decision == 0 and y == 0
         explanation = (
-            f"With only a {pred_pct} predicted chance of default, **approval** would "
-            "have been optimal and saved the **$1,000** rejection cost."
+            f"With only a {pred_pct} predicted chance of default, <strong>approval</strong> would "
+            "have been optimal and saved the <strong>$1,000</strong> rejection cost."
         )
 
     st.title("Practice feedback")

@@ -329,7 +329,7 @@ def render_trial_header(
         badge_cls = "badge-practice"
         label = "Practice"
     else:
-        meta = f"Round {block_num} of 3 &nbsp;·&nbsp; Application {pos} of 6"
+        meta = f"Round {block_num} of 3 · Application {pos} of 6"
 
     html = (
         f'<div class="trial-header">'
