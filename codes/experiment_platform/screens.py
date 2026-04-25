@@ -835,10 +835,8 @@ def performance_screen() -> None:
             return
 
     tier = performance_tier(perf["total_cost"], perf["optimal_cost"])
-    st.markdown(
-        f"**Total losses:** {format_currency(perf['total_cost'])}  \n"
-        f"**Best possible strategy:** {format_currency(perf['optimal_cost'])}"
-    )
+    st.markdown(f"Your total cost: {format_currency(perf['total_cost'])}")
+    st.markdown(f"Cost-sensitive policy benchmark: {format_currency(perf['optimal_cost'])}")
     st.markdown("#### Breakdown")
     st.markdown(
         f"- Correct approvals (approved, borrower repaid): **{perf['correct_approvals']}**\n"

@@ -240,8 +240,6 @@ QUIZ_KEY_POINTS = """
 # -----------------------------------------------------------------------------
 
 PRACTICE_INTRO = """
-### Practice
-
 You will now complete **2 practice trials** to familiarize yourself with the task.
 After each practice decision, you will see the correct outcome and how your choice compared
 to the cost-minimizing strategy.
@@ -303,16 +301,12 @@ TRUST_LABELS = {
 }
 
 THANK_YOU_TEXT = """
-### Thank you for completing the study!
-
 Your responses have been recorded.
 
 If you have questions about this research, contact: **anna_asatryan2@edu.aua.am**
 """
 
 ALREADY_COMPLETED_TEXT = """
-### You have already completed this study
-
 Our records show that this browser session has already submitted a completed run of the
 experiment. To preserve data quality, each participant may only take part once.
 
