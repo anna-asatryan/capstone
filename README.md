@@ -23,14 +23,14 @@ docs/                   # Architecture and reproduction guides
 
 ## Quick start
 
-```bash
-python run.py                    # reproduce from frozen artifacts (default)
-python run.py --mode rebuild     # best-effort re-run from raw data
-python run.py --mode validate    # verify frozen artifact hashes
-python run.py --mode doctor      # env + artifact integrity check
-```
+Run the entrypoint script without arguments for an interactive menu, or pass a mode directly:
 
-Add `--launch-summary` to open the Dash summary app after the pipeline finishes, or `--no-launch-summary` to skip the prompt.
+```bash
+python run.py                        # interactive menu (defaults to paper reproduction)
+python run.py --mode summary         # launch summary visualisation app
+python run.py --mode validate        # check integrity of all frozen artifacts
+python run.py --mode rebuild-design  # best-effort upstream design rebuild (audit only)
+```
 
 ## Notebook pipeline
 

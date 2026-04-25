@@ -1,0 +1,4 @@
+participant_group,block_1_protocol,block_2_protocol,block_3_protocol,target_n
+group_1,no_ai,human_first,ai_first,33
+group_2,human_first,ai_first,no_ai,33
+group_3,ai_first,no_ai,human_first,34

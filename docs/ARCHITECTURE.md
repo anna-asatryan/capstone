@@ -37,9 +37,13 @@ Validates the official frozen boundary:
 - manifest hashes match
 - expected row counts and required columns present
 
-### `codes/pipelines/reproduce_from_frozen.py`
+### `codes/pipelines/reproduce_paper.py`
 
-Official deterministic path. Reads from `artifacts/frozen/`, writes to `artifacts/analysis/latest/`.
+Official deterministic path. Reads from `artifacts/frozen/`, including participant exports, and writes tables and figures to `artifacts/analysis/latest/`.
+
+### `codes/pipelines/validate_experiment_design.py`
+
+Validates experiment design structure, block ordering, and ensures no leakage across difficulty tiers.
 
 ### `codes/pipelines/rebuild_from_upstream.py`
 
@@ -60,10 +64,10 @@ Shared helpers:
 `run.py` at repo root is the canonical entrypoint.
 
 ```
-python run.py [--mode frozen|rebuild|validate|doctor] [--launch-summary|--no-launch-summary]
+python run.py [--mode paper|summary|validate|rebuild-design]
 ```
 
-Default mode is `frozen`. Helper modes (`validate`, `doctor`) return without launching the summary app.
+Default mode is `paper`. Helper modes (`validate`, `rebuild-design`) return without launching the summary app.
 
 ## Frozen artifact policy
 

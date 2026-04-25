@@ -1,23 +1,31 @@
 {
   "version": "1.0",
-  "created_at": "2026-04-22T23:21:54.001700+00:00",
-  "git_commit": "d77f40aeca2103444aad11470de216de33f9ad14",
+  "created_at": "2026-04-25T00:00:00+00:00",
+  "git_commit": "9fcf633ba08f5ba494a0412e025df1446bb55527",
   "files": {
     "final_cases.csv": {
-      "sha256": "2477932e1389446c889877bf8b7331082f1bf3f76bf411d9e335c78fe21818ef",
-      "bytes": 3467
+      "sha256": "4974e6abe878a752ca2d5966f66d10366a6cb8f72dfbec6197165f35484365f4",
+      "bytes": 3501,
+      "rows": 18
     },
     "practice_cases.csv": {
-      "sha256": "e3a1f702bf9c535ef4526cdfb72b0cf82632f59a3c80e0162b1f98dda21f2c8b",
-      "bytes": 650
+      "sha256": "39c0703dc052e38551ed1964c861c8ce15b7d5d3e7fba133f4ded940e9ae2194",
+      "bytes": 655,
+      "rows": 2
     },
     "protocol_rotation.csv": {
       "sha256": "e03f58981e8e44f0e2b388ba0a7617b839bb6ee7842a2c0457b3a126dcbd3210",
-      "bytes": 192
+      "bytes": 192,
+      "rows": 3
     },
     "candidate_pool_scored.parquet": {
-      "sha256": "8e9ca67675048c05709c99efd5188b70250ce43cc6136a1cb8ea5f0223da750d",
-      "bytes": 8310849
+      "sha256": "8a45f23e843e4bd5d166bda10b3d4222688481975e31b95870f292a10cbd2092",
+      "bytes": 7357866,
+      "rows": 479744
+    },
+    "selection_manifest.json": {
+      "sha256": "056ee83315f70bb826e84c66f275c27b54811f65303401556cfd088e195d7f20",
+      "bytes": 943
     }
   }
 }

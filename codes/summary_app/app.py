@@ -10,7 +10,7 @@ from codes.summary_app.layout import build_layout
 
 def create_app(data_dir: str | None = None) -> Dash:
     bundle = load_analysis_bundle(data_dir)
-    app = Dash(__name__, title="Capstone Summary App")
+    app = Dash(__name__, title="Loan Decision Study — Results Explorer")
     app.layout = html.Div(build_layout(bundle))
     return app
 

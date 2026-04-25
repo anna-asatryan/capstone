@@ -6,6 +6,12 @@ Edit this file to change wording, case data, quiz content, or experiment
 parameters. No other module should hold user-facing strings.
 """
 
+from pathlib import Path
+
+import pandas as pd
+
+_FROZEN_DIR = Path(__file__).resolve().parent / "data" / "frozen"
+
 # =============================================================================
 # EXPERIMENT PARAMETERS
 # =============================================================================
@@ -26,223 +32,50 @@ EDUCATION_LEVELS = [
 ]
 
 # =============================================================================
-# CASE DATA
+# CASE DATA  (loaded from artifacts/frozen/ — do not edit by hand)
 # =============================================================================
 
-EXPERIMENTAL_CASES = [
-    {
-        "case_id": 777203, "case_position": 1, "block": "block_1",
-        "loan_amnt": 18000, "term": "60 months", "int_rate": 10.91,
-        "log_annual_inc": 10.71444, "dti": 23.49, "revol_util": 43.0,
-        "home_ownership": "RENT", "purpose": "debt_consolidation",
-        "credit_history_years": 7.92,
-        "pred_prob": 0.311574, "y_true": 1,
-        "difficulty_tier": "easy", "difficulty_score": 0.307547,
-        "correct": 0, "model_optimal": 0,
-    },
-    {
-        "case_id": 49639, "case_position": 2, "block": "block_1",
-        "loan_amnt": 11000, "term": "36 months", "int_rate": 5.32,
-        "log_annual_inc": 10.59666, "dti": 10.92, "revol_util": 35.9,
-        "home_ownership": "MORTGAGE", "purpose": "debt_consolidation",
-        "credit_history_years": 27.75,
-        "pred_prob": 0.054726, "y_true": 0,
-        "difficulty_tier": "easy", "difficulty_score": 0.162701,
-        "correct": 1, "model_optimal": 1,
-    },
-    {
-        "case_id": 765600, "case_position": 3, "block": "block_1",
-        "loan_amnt": 30225, "term": "60 months", "int_rate": 30.75,
-        "log_annual_inc": 11.050906, "dti": 29.2, "revol_util": 92.9,
-        "home_ownership": "RENT", "purpose": "debt_consolidation",
-        "credit_history_years": 19.25,
-        "pred_prob": 0.868101, "y_true": 0,
-        "difficulty_tier": "hard", "difficulty_score": 0.78429,
-        "correct": 0, "model_optimal": 1,
-    },
-    {
-        "case_id": 37221, "case_position": 4, "block": "block_1",
-        "loan_amnt": 18000, "term": "60 months", "int_rate": 28.72,
-        "log_annual_inc": 10.085851, "dti": 39.53, "revol_util": 96.4,
-        "home_ownership": "OWN", "purpose": "credit_card",
-        "credit_history_years": 18.25,
-        "pred_prob": 0.94613, "y_true": 1,
-        "difficulty_tier": "hard", "difficulty_score": 0.744436,
-        "correct": 1, "model_optimal": 1,
-    },
-    {
-        "case_id": 2668, "case_position": 5, "block": "block_1",
-        "loan_amnt": 11450, "term": "36 months", "int_rate": 15.02,
-        "log_annual_inc": 10.999446, "dti": 16.06, "revol_util": 66.3,
-        "home_ownership": "RENT", "purpose": "moving",
-        "credit_history_years": 6.17,
-        "pred_prob": 0.234348, "y_true": 1,
-        "difficulty_tier": "medium", "difficulty_score": 0.377186,
-        "correct": 0, "model_optimal": 0,
-    },
-    {
-        "case_id": 161, "case_position": 6, "block": "block_1",
-        "loan_amnt": 4000, "term": "36 months", "int_rate": 18.94,
-        "log_annual_inc": 12.072547, "dti": 18.78, "revol_util": 59.4,
-        "home_ownership": "MORTGAGE", "purpose": "credit_card",
-        "credit_history_years": 28.5,
-        "pred_prob": 0.168642, "y_true": 0,
-        "difficulty_tier": "medium", "difficulty_score": 0.592555,
-        "correct": 1, "model_optimal": 0,
-    },
-    {
-        "case_id": 6272, "case_position": 7, "block": "block_2",
-        "loan_amnt": 40000, "term": "60 months", "int_rate": 13.56,
-        "log_annual_inc": 11.512935, "dti": 6.02, "revol_util": 20.6,
-        "home_ownership": "MORTGAGE", "purpose": "small_business",
-        "credit_history_years": 12.0,
-        "pred_prob": 0.333333, "y_true": 1,
-        "difficulty_tier": "easy", "difficulty_score": 0.30891,
-        "correct": 0, "model_optimal": 0,
-    },
-    {
-        "case_id": 241937, "case_position": 8, "block": "block_2",
-        "loan_amnt": 10000, "term": "36 months", "int_rate": 9.8,
-        "log_annual_inc": 11.314487, "dti": 9.56, "revol_util": 84.0,
-        "home_ownership": "MORTGAGE", "purpose": "debt_consolidation",
-        "credit_history_years": 3.92,
-        "pred_prob": 0.074984, "y_true": 0,
-        "difficulty_tier": "easy", "difficulty_score": 0.225732,
-        "correct": 1, "model_optimal": 1,
-    },
-    {
-        "case_id": 791841, "case_position": 9, "block": "block_2",
-        "loan_amnt": 25450, "term": "60 months", "int_rate": 30.84,
-        "log_annual_inc": 11.002117, "dti": 28.8, "revol_util": 74.0,
-        "home_ownership": "RENT", "purpose": "debt_consolidation",
-        "credit_history_years": 7.5,
-        "pred_prob": 0.842869, "y_true": 0,
-        "difficulty_tier": "hard", "difficulty_score": 0.78429,
-        "correct": 0, "model_optimal": 1,
-    },
-    {
-        "case_id": 165503, "case_position": 10, "block": "block_2",
-        "loan_amnt": 13200, "term": "60 months", "int_rate": 28.14,
-        "log_annual_inc": 10.404293, "dti": 39.53, "revol_util": 54.3,
-        "home_ownership": "RENT", "purpose": "debt_consolidation",
-        "credit_history_years": 11.92,
-        "pred_prob": 0.923224, "y_true": 1,
-        "difficulty_tier": "hard", "difficulty_score": 0.744436,
-        "correct": 1, "model_optimal": 1,
-    },
-    {
-        "case_id": 776034, "case_position": 11, "block": "block_2",
-        "loan_amnt": 8750, "term": "36 months", "int_rate": 12.62,
-        "log_annual_inc": 10.308986, "dti": 29.88, "revol_util": 13.4,
-        "home_ownership": "RENT", "purpose": "debt_consolidation",
-        "credit_history_years": 15.5,
-        "pred_prob": 0.267119, "y_true": 1,
-        "difficulty_tier": "medium", "difficulty_score": 0.353885,
-        "correct": 0, "model_optimal": 0,
-    },
-    {
-        "case_id": 710322, "case_position": 12, "block": "block_2",
-        "loan_amnt": 32000, "term": "60 months", "int_rate": 13.99,
-        "log_annual_inc": 12.398217, "dti": 15.28, "revol_util": 68.5,
-        "home_ownership": "MORTGAGE", "purpose": "credit_card",
-        "credit_history_years": 12.5,
-        "pred_prob": 0.188803, "y_true": 0,
-        "difficulty_tier": "medium", "difficulty_score": 0.343912,
-        "correct": 1, "model_optimal": 0,
-    },
-    {
-        "case_id": 29292, "case_position": 13, "block": "block_3",
-        "loan_amnt": 19200, "term": "60 months", "int_rate": 15.04,
-        "log_annual_inc": 11.396403, "dti": 2.55, "revol_util": 4.8,
-        "home_ownership": "RENT", "purpose": "small_business",
-        "credit_history_years": 12.67,
-        "pred_prob": 0.37037, "y_true": 1,
-        "difficulty_tier": "easy", "difficulty_score": 0.328147,
-        "correct": 0, "model_optimal": 0,
-    },
-    {
-        "case_id": 727176, "case_position": 14, "block": "block_3",
-        "loan_amnt": 12000, "term": "36 months", "int_rate": 7.99,
-        "log_annual_inc": 10.819798, "dti": 17.15, "revol_util": 23.9,
-        "home_ownership": "OWN", "purpose": "home_improvement",
-        "credit_history_years": 37.92,
-        "pred_prob": 0.101631, "y_true": 0,
-        "difficulty_tier": "easy", "difficulty_score": 0.141881,
-        "correct": 1, "model_optimal": 1,
-    },
-    {
-        "case_id": 785690, "case_position": 15, "block": "block_3",
-        "loan_amnt": 35000, "term": "60 months", "int_rate": 28.72,
-        "log_annual_inc": 10.308986, "dti": 26.48, "revol_util": 48.7,
-        "home_ownership": "RENT", "purpose": "credit_card",
-        "credit_history_years": 14.0,
-        "pred_prob": 0.822149, "y_true": 0,
-        "difficulty_tier": "hard", "difficulty_score": 0.744436,
-        "correct": 0, "model_optimal": 1,
-    },
-    {
-        "case_id": 274352, "case_position": 16, "block": "block_3",
-        "loan_amnt": 14075, "term": "60 months", "int_rate": 30.84,
-        "log_annual_inc": 10.59666, "dti": 27.36, "revol_util": 49.5,
-        "home_ownership": "RENT", "purpose": "debt_consolidation",
-        "credit_history_years": 11.08,
-        "pred_prob": 0.901361, "y_true": 1,
-        "difficulty_tier": "hard", "difficulty_score": 0.744436,
-        "correct": 1, "model_optimal": 1,
-    },
-    {
-        "case_id": 208784, "case_position": 17, "block": "block_3",
-        "loan_amnt": 8725, "term": "36 months", "int_rate": 18.99,
-        "log_annual_inc": 10.16589, "dti": 5.22, "revol_util": 35.5,
-        "home_ownership": "OWN", "purpose": "debt_consolidation",
-        "credit_history_years": 6.5,
-        "pred_prob": 0.289308, "y_true": 1,
-        "difficulty_tier": "medium", "difficulty_score": 0.524324,
-        "correct": 0, "model_optimal": 0,
-    },
-    {
-        "case_id": 33, "case_position": 18, "block": "block_3",
-        "loan_amnt": 2500, "term": "36 months", "int_rate": 18.94,
-        "log_annual_inc": 11.461643, "dti": 17.34, "revol_util": 31.0,
-        "home_ownership": "MORTGAGE", "purpose": "debt_consolidation",
-        "credit_history_years": 16.0,
-        "pred_prob": 0.210035, "y_true": 0,
-        "difficulty_tier": "medium", "difficulty_score": 0.584377,
-        "correct": 1, "model_optimal": 0,
-    },
+_CASE_COLUMNS = [
+    "case_id", "case_position", "block", "loan_amnt", "term", "int_rate",
+    "log_annual_inc", "dti", "revol_util", "home_ownership", "purpose",
+    "credit_history_years", "pred_prob", "y_true", "difficulty_tier",
+    "difficulty_score", "correct", "model_optimal",
 ]
+_INT_FIELDS = {"case_id", "case_position", "loan_amnt", "y_true", "correct", "model_optimal"}
+_STR_FIELDS = {"term", "home_ownership", "purpose", "difficulty_tier", "block"}
 
-PRACTICE_CASES = [
-    {
-        "case_id": 731479, "case_position": -2, "block": "practice",
-        "loan_amnt": 5000, "term": "36 months", "int_rate": 8.24,
-        "log_annual_inc": 11.561725, "dti": 1.05, "revol_util": 5.2,
-        "home_ownership": "RENT", "purpose": "moving",
-        "credit_history_years": 24.75,
-        "pred_prob": 0.058615, "y_true": 0,
-        "difficulty_tier": "easy", "difficulty_score": 0.089268,
-        "correct": 1, "model_optimal": 1,
-    },
-    {
-        "case_id": 252416, "case_position": -1, "block": "practice",
-        "loan_amnt": 22000, "term": "60 months", "int_rate": 19.89,
-        "log_annual_inc": 10.691968, "dti": 31.15, "revol_util": 51.6,
-        "home_ownership": "RENT", "purpose": "debt_consolidation",
-        "credit_history_years": 15.5,
-        "pred_prob": 0.578106, "y_true": 1,
-        "difficulty_tier": "hard", "difficulty_score": 0.781741,
-        "correct": 1, "model_optimal": 1,
-    },
-]
+
+def _row_to_dict(row: "pd.Series") -> dict:
+    d = {}
+    for col in _CASE_COLUMNS:
+        val = row[col]
+        if col in _INT_FIELDS:
+            d[col] = int(val)
+        elif col in _STR_FIELDS:
+            d[col] = str(val)
+        else:
+            d[col] = round(float(val), 6)
+    return d
+
+
+_fc = pd.read_csv(_FROZEN_DIR / "final_cases.csv")
+EXPERIMENTAL_CASES = [_row_to_dict(row) for _, row in _fc[_CASE_COLUMNS].iterrows()]
+
+_pc = pd.read_csv(_FROZEN_DIR / "practice_cases.csv")
+PRACTICE_CASES = [_row_to_dict(row) for _, row in _pc[_CASE_COLUMNS].iterrows()]
 
 # =============================================================================
-# PROTOCOL ROTATION (Latin Square)
+# PROTOCOL ROTATION (Latin Square — loaded from artifacts/frozen/)
 # =============================================================================
 
+_pr = pd.read_csv(_FROZEN_DIR / "protocol_rotation.csv")
 PROTOCOL_ROTATION = {
-    "group_1": {"block_1": "no_ai",        "block_2": "human_first", "block_3": "ai_first"},
-    "group_2": {"block_1": "human_first",  "block_2": "ai_first",    "block_3": "no_ai"},
-    "group_3": {"block_1": "ai_first",     "block_2": "no_ai",       "block_3": "human_first"},
+    row["participant_group"]: {
+        "block_1": row["block_1_protocol"],
+        "block_2": row["block_2_protocol"],
+        "block_3": row["block_3_protocol"],
+    }
+    for _, row in _pr.iterrows()
 }
 
 PRACTICE_PROTOCOL = "ai_first"               # practice always uses ai_first — simplest flow + exposes AI panel

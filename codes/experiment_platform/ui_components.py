@@ -15,7 +15,6 @@ import streamlit as st
 
 from config import MIN_TRIAL_TIME_MS
 from utils import (
-    ai_recommendation_label,
     dti_descriptor,
     format_percent,
     home_ownership_verb,
@@ -411,7 +410,7 @@ def render_sidebar_reference(protocol: str, is_practice: bool = False) -> None:
             )
             st.markdown(
                 '<p class="sidebar-rule">AI estimate shown <b>before</b> your decision. '
-                'You may agree or disagree.</p>',
+                'You may use it to guide your choice.</p>',
                 unsafe_allow_html=True,
             )
         elif protocol == "human_first":
@@ -519,12 +518,11 @@ def render_case_card(case: dict, participant_id: str = "") -> None:
 
 def render_ai_panel(case: dict) -> None:
     pct = format_percent(case["pred_prob"])
-    rec = ai_recommendation_label(case["pred_prob"])
     html = (
         f'<div class="ai-panel">'
         f'<div class="ai-label">AI Risk Assessment</div>'
-        f'<h4>The AI estimates a {pct} probability that this borrower will default.</h4>'
-        f'<p>Based on the bank\'s risk policy, the AI recommends: <b>{rec}</b>.</p>'
+        f'<h4>AI-estimated probability of default: {pct}</h4>'
+        f'<p>Use this estimate together with the bank’s cost rule when making your decision.</p>'
         f"</div>"
     )
     st.markdown(html, unsafe_allow_html=True)

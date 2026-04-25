@@ -23,6 +23,7 @@ body {
   padding: 32px 20px 48px;
 }
 
+/* ── Hero ───────────────────────────────────────────────────────────────── */
 .hero {
   padding: 32px;
   border: 1px solid var(--line);
@@ -52,45 +53,263 @@ body {
   line-height: 1.55;
 }
 
-.overview-shell {
+/* ── Tabs ───────────────────────────────────────────────────────────────── */
+.tab-strip {
   margin-top: 24px;
-  display: grid;
-  gap: 18px;
 }
 
-.metric-grid {
+/* Override Dash tab defaults */
+.tab-btn {
+  padding: 12px 20px !important;
+  font-family: "Iowan Old Style", "Palatino Linotype", serif !important;
+  font-size: 0.92rem !important;
+  border: 1px solid var(--line) !important;
+  border-bottom: none !important;
+  border-radius: 12px 12px 0 0 !important;
+  background: var(--sand) !important;
+  color: var(--ink) !important;
+  cursor: pointer;
+}
+
+.tab-btn-selected {
+  background: var(--paper) !important;
+  font-weight: 700 !important;
+  color: var(--accent) !important;
+}
+
+/* ── Tab content ────────────────────────────────────────────────────────── */
+.tab-content {
+  padding: 28px 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 20px;
+}
+
+/* ── Section headers ────────────────────────────────────────────────────── */
+.section-header {
+  margin-bottom: 4px;
+}
+
+.section-title {
+  font-size: 1.6rem;
+  margin: 0 0 6px;
+}
+
+.section-subtitle {
+  color: #666154;
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.subsection-title {
+  font-size: 1.1rem;
+  margin: 0 0 14px;
+}
+
+/* ── Stats row ──────────────────────────────────────────────────────────── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 14px;
 }
 
-.metric-card,
-.panel,
-.metadata-block {
+.stat-card {
   border: 1px solid var(--line);
   background: rgba(255, 253, 248, 0.92);
-  border-radius: 22px;
+  border-radius: 18px;
   box-shadow: var(--shadow);
-}
-
-.metric-card {
   padding: 18px;
 }
 
-.metric-label {
+.stat-label {
   font-size: 0.82rem;
   color: #6b6e72;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
-.metric-value {
-  margin-top: 8px;
-  font-size: 1.9rem;
+.stat-value {
+  margin-top: 6px;
+  font-size: 2rem;
   font-weight: 700;
 }
 
+.stat-note {
+  font-size: 0.78rem;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* ── Panel / shared card ────────────────────────────────────────────────── */
+.panel {
+  border: 1px solid var(--line);
+  background: rgba(255, 253, 248, 0.92);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+  padding: 20px;
+  min-height: 80px;
+}
+
+.panel h3 {
+  margin: 0 0 14px;
+}
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 18px;
+}
+
+.empty-state {
+  color: #6b6e72;
+  font-size: 0.92rem;
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+
+/* ── Hypothesis cards ───────────────────────────────────────────────────── */
+.hyp-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.hyp-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px 20px;
+  background: rgba(255, 253, 248, 0.85);
+}
+
+.hyp-pending {
+  border-left: 3px solid #ccc;
+}
+
+.hyp-supported {
+  border-left: 3px solid var(--teal);
+}
+
+.hyp-not_supported {
+  border-left: 3px solid #b5473a;
+}
+
+.hyp-underpowered {
+  border-left: 3px solid var(--accent);
+}
+
+.hyp-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.hyp-id {
+  font-size: 1rem;
+  font-weight: 700;
+  min-width: 28px;
+}
+
+.hyp-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.hyp-label {
+  font-size: 0.97rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.hyp-stats-row {
+  display: flex;
+  gap: 20px;
+  margin: 8px 0;
+}
+
+.hyp-stat {
+  font-size: 0.85rem;
+  color: #4a4d52;
+  font-family: "Courier New", monospace;
+}
+
+.hyp-interp {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* ── Awaiting state ─────────────────────────────────────────────────────── */
+.awaiting-panel {
+  border: 2px dashed var(--line);
+  border-radius: 18px;
+  padding: 52px 32px;
+  text-align: center;
+  background: rgba(246, 242, 232, 0.5);
+}
+
+.awaiting-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #6b6e72;
+  margin-bottom: 12px;
+}
+
+.awaiting-body {
+  color: #888;
+  font-size: 0.93rem;
+  max-width: 480px;
+  margin: 0 auto 8px;
+  line-height: 1.5;
+}
+
+.awaiting-hint {
+  color: #aaa;
+  font-size: 0.83rem;
+  font-style: italic;
+  margin: 4px auto 0;
+}
+
+/* ── Reproducibility ────────────────────────────────────────────────────── */
+.repro-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+.check-list {
+  display: grid;
+  gap: 10px;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.93rem;
+}
+
+.check-icon {
+  font-size: 1.05rem;
+  min-width: 18px;
+  text-align: center;
+}
+
+.check-ok { color: #155b67; }
+.check-pending { color: #aaa; }
+.check-label { color: #555; }
+.check-value { font-weight: 700; }
+
+/* ── Metadata / warnings (shared with old app) ──────────────────────────── */
 .metadata-block {
+  border: 1px solid var(--line);
+  background: rgba(255, 253, 248, 0.92);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
   padding: 18px 20px;
 }
 
@@ -98,13 +317,8 @@ body {
   margin-top: 8px;
 }
 
-.meta-key {
-  color: #666154;
-}
-
-.meta-value {
-  font-weight: 700;
-}
+.meta-key { color: #666154; }
+.meta-value { font-weight: 700; }
 
 .warning-row {
   display: flex;
@@ -116,7 +330,7 @@ body {
 .ok-pill {
   padding: 10px 14px;
   border-radius: 999px;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
 }
 
 .warning-pill {
@@ -129,28 +343,7 @@ body {
   color: #155b67;
 }
 
-.panel-grid {
-  margin-top: 28px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 18px;
-}
-
-.panel {
-  padding: 10px;
-  min-height: 280px;
-}
-
-.panel h3 {
-  margin: 8px 12px;
-}
-
-.empty-state {
-  margin: 0 12px 12px;
-  color: #6b6e72;
-  line-height: 1.5;
-}
-
+/* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 720px) {
   .app-shell {
     padding: 20px 14px 32px;
@@ -163,5 +356,14 @@ body {
 
   .panel-grid {
     grid-template-columns: 1fr;
+  }
+
+  .repro-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tab-btn {
+    padding: 10px 12px !important;
+    font-size: 0.82rem !important;
   }
 }
