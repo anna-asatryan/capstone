@@ -427,14 +427,18 @@ def trial_screen() -> None:
             practice_n=practice_n,
         )
     else:
-        block_num = BLOCK_NUMBER[trial["block"]]
+        block_num = BLOCK_NUMBER.get(trial["block"], 1)
         pos = _block_position(seq, idx, trial["block"])
         render_trial_header(
             protocol,
             block_num=block_num,
             pos=pos,
+            is_demo=is_demo_mode(),
         )
-        render_overall_progress(idx)
+        if is_demo_mode():
+            render_overall_progress(idx, total=3)
+        else:
+            render_overall_progress(idx)
 
     render_case_card(case, participant_id=str(st.session_state.get("participant_id", "")))
 

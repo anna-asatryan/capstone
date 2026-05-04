@@ -316,6 +316,7 @@ def render_trial_header(
     pos: int | None = None,
     is_practice: bool = False,
     practice_n: int | None = None,
+    is_demo: bool = False,
 ) -> None:
     """
     Renders a sticky header bar showing the study title, protocol badge,
@@ -328,6 +329,8 @@ def render_trial_header(
         meta = f"Practice Trial {practice_n} of 2"
         badge_cls = "badge-practice"
         label = "Practice"
+    elif is_demo:
+        meta = f"Demo Case {pos} of 3"
     else:
         meta = f"Round {block_num} of 3 · Application {pos} of 6"
 
@@ -694,16 +697,15 @@ def render_progress_line(text: str) -> None:
     st.markdown(f'<div class="progress-line">{text}</div>', unsafe_allow_html=True)
 
 
-def render_overall_progress(current_trial_index: int) -> None:
+def render_overall_progress(current_trial_index: int, total: int = 18) -> None:
     """
     Render a visual progress bar showing how far the participant is through
-    the 18 experimental trials. Practice trials (-2, -1) show 0%.
+    the experimental trials. Practice trials (-2, -1) show 0%.
     """
     if current_trial_index < 1:
         completed = 0
     else:
         completed = current_trial_index - 1  # trial 1 = 0 completed, trial 18 = 17 completed
-    total = 18
     pct = min(100, int((completed / total) * 100))
     html = (
         f'<div class="progress-bar-container">'
