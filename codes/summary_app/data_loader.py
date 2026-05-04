@@ -60,20 +60,29 @@ def load_data(root_str: Optional[str] = None) -> AppData:
     root = Path(root_str) if root_str else find_repo_root()
     warnings: list[str] = []
 
-    exports = root / "artifacts" / "db_exports"
-    analysis_tables = root / "artifacts" / "analysis" / "tables"
-    frozen = root / "artifacts" / "frozen"
-    build = root / "artifacts" / "build"
+    APP_DIR = Path(__file__).resolve().parent
+    APP_DATA = APP_DIR / "data"
 
-    participants = _read_csv(exports / "participants.csv")
-    trials = _read_csv(exports / "trials.csv")
-    quiz = _read_csv(exports / "quiz_responses.csv")
-    cases = _read_csv(frozen / "final_cases.csv")
-    if cases.empty:
-        cases = _read_csv(build / "final_cases.csv")
+    if (APP_DATA / "participants.csv").exists() and (APP_DATA / "trials.csv").exists():
+        participants = _read_csv(APP_DATA / "participants.csv")
+        trials = _read_csv(APP_DATA / "trials.csv")
+        quiz = _read_csv(APP_DATA / "quiz_responses.csv")
+        cases = _read_csv(APP_DATA / "final_cases.csv")
+    else:
+        exports = root / "artifacts" / "db_exports"
+        analysis_tables = root / "artifacts" / "analysis" / "tables"
+        frozen = root / "artifacts" / "frozen"
+        build = root / "artifacts" / "build"
+
+        participants = _read_csv(exports / "participants.csv")
+        trials = _read_csv(exports / "trials.csv")
+        quiz = _read_csv(exports / "quiz_responses.csv")
+        cases = _read_csv(frozen / "final_cases.csv")
+        if cases.empty:
+            cases = _read_csv(build / "final_cases.csv")
 
     if participants.empty or trials.empty:
-        warnings.append("Could not find participants.csv or trials.csv under artifacts/db_exports/.")
+        warnings.append("Could not find participants.csv or trials.csv under summary_app/data/ or artifacts/db_exports/.")
         return AppData(root, participants, trials, quiz, cases, trials, set(), warnings)
 
     # Probability scale guard.
