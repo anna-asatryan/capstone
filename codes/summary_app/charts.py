@@ -200,14 +200,21 @@ def woa_histogram(df: pd.DataFrame, adjusters_only: bool = False, height: int = 
 def reliance_stacked_bar(rel: pd.DataFrame, height: int = 340) -> go.Figure:
     if rel.empty:
         return go.Figure()
+    display_names = {
+        "Beneficial reliance": "Aligned — model action agreed with outcome",
+        "Over-reliance": "Aligned — model action disagreed with outcome",
+        "Beneficial override": "Deviated — model action disagreed with outcome",
+        "Harmful override": "Deviated — model action agreed with outcome",
+    }
     cols = ["Beneficial reliance", "Over-reliance", "Beneficial override", "Harmful override"]
     colors = ["#059669", "#dc2626", "#2563eb", "#ea580c"]
     fig = go.Figure()
     for col, color in zip(cols, colors):
-        fig.add_trace(go.Bar(x=rel["Protocol"], y=rel[col], name=col, marker_color=color, hovertemplate=f"{col}<br>%{{y:.1%}}<extra></extra>"))
+        label = display_names[col]
+        fig.add_trace(go.Bar(x=rel["Protocol"], y=rel[col], name=label, marker_color=color, hovertemplate=f"{label}<br>%{{y:.1%}}<extra></extra>"))
     fig.update_layout(barmode="stack")
-    fig = tufte_layout(fig, height=height, title="Reliance decomposition across AI trials")
-    fig.update_yaxes(title="Share of AI-condition trials", tickformat=".0%")
+    fig = tufte_layout(fig, height=height, title="Alignment with threshold-implied action")
+    fig.update_yaxes(title="Share of AI-probability trials", tickformat=".0%")
     return fig
 
 

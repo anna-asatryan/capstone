@@ -124,7 +124,7 @@ if page == "Overview":
     hero(
         "Human-AI Decision Explorer",
         get_landing_note(),
-        pills=[f"N={n_completed} completers", f"{n_trials:,} scored trials", "3 advice protocols", f"{n_cases} loan cases"],
+        pills=[f"N={n_completed} completers", f"{n_trials:,} scored trials", "3 interaction protocols", f"{n_cases} loan cases"],
     )
 elif page == "Protocol Comparator":
     hero(
@@ -135,14 +135,14 @@ elif page == "Protocol Comparator":
 elif page == "Human-First Revision":
     hero(
         "Human-First Revision Explorer",
-        "This is the cleanest within-trial evidence: participants first made an unaided judgment, then saw AI advice, then finalized their response.",
-        pills=["Initial judgment → AI advice → final decision", f"N={switch.get('n', 0)} human-first trials"],
+        "This is the cleanest within-trial evidence: participants first made an unaided judgment, then saw the AI-predicted default probability, then finalized their response.",
+        pills=["Initial judgment → AI probability → final decision", f"N={switch.get('n', 0)} human-first trials"],
     )
 elif page == "Reliance Explorer":
     hero(
         "Reliance Explorer",
-        "Inspect how participants used AI advice: whether they followed recommendations, overrode them, or revised probability estimates toward the model.",
-        pills=["WOA available only in human-first", "Zero-inflated reliance pattern"],
+        "Inspect how participants revised probability estimates toward the AI prediction and whether final decisions aligned with the threshold-implied action.",
+        pills=["WOA available only in human-first", "Zero-inflated adjustment pattern"],
     )
 elif page == "Case Explorer":
     hero(
@@ -322,14 +322,14 @@ elif page == "Reliance Explorer":
             ]
         )
 
-        finding("WOA did not differ meaningfully when AI was correct vs wrong.")
+        finding("WOA did not differ meaningfully by whether the threshold-implied action agreed with the realized outcome.")
 
         adjusters_only = st.toggle("Show adjusters only", value=False)
         d_woa = woa["data"].copy()
-        ai_correct_filter = st.selectbox("AI correctness filter", ["All", "AI correct", "AI wrong"])
-        if ai_correct_filter == "AI correct":
+        ai_correct_filter = st.selectbox("Threshold-implied action outcome agreement", ["All", "Action agreed with outcome", "Action disagreed with outcome"])
+        if ai_correct_filter == "Action agreed with outcome":
             d_woa = d_woa[d_woa["ai_correct"] == 1]
-        elif ai_correct_filter == "AI wrong":
+        elif ai_correct_filter == "Action disagreed with outcome":
             d_woa = d_woa[d_woa["ai_correct"] == 0]
         st.plotly_chart(woa_histogram(d_woa, adjusters_only=adjusters_only), use_container_width=True, config={"displayModeBar": False}, key="plot_reliance_woa")
 
@@ -343,7 +343,7 @@ elif page == "Reliance Explorer":
                 if c != "Protocol":
                     rel_show[c] = rel_show[c].map(lambda x: f"{100*x:.1f}%" if pd.notna(x) else "—")
             st.dataframe(rel_show, use_container_width=True, hide_index=True)
-        small_note("AI correctness here is defined ex post from the observed case outcome. It is useful behaviorally but should not be confused with probability calibration.")
+        small_note("Threshold-implied action outcome agreement is determined ex post from the realized loan outcome. It is useful behaviorally but should not be confused with probability calibration.")
 
     # Optional participant benefit if available.
     benefit_path = app_data.root / "artifacts" / "analysis" / "tables" / "ai_benefit_heterogeneity.csv"
@@ -377,9 +377,9 @@ elif page == "Case Explorer":
 
     metric_cards(
         [
-            {"label": "AI default risk", "value": fmt_num(csum.get("pred_prob")), "note": f"Cost threshold τ={TAU:.3f}."},
+            {"label": "AI-predicted default risk", "value": fmt_num(csum.get("pred_prob")), "note": f"Cost threshold τ={TAU:.3f}."},
             {"label": "True outcome", "value": "Default" if csum.get("y_true") == 1 else "Paid", "note": "Observed outcome for this historical loan."},
-            {"label": "Optimal decision", "value": "Approve" if csum.get("optimal_dec") == 1 else "Reject", "note": "Based on τ = C_FP/(C_FP+C_FN)."},
+            {"label": "Threshold-implied action", "value": "Approve" if csum.get("optimal_dec") == 1 else "Reject", "note": "Derived from τ=1/6; not necessarily displayed as a binary recommendation."},
             {"label": "Mean case cost", "value": fmt_num(csum.get("mean_cost")), "note": "Across current filter."},
         ]
     )

@@ -180,6 +180,7 @@ def reliance_decomposition(df: pd.DataFrame) -> pd.DataFrame:
     for col in ["ai_rec", "ai_correct", "follows_ai"]:
         if col not in d.columns:
             return pd.DataFrame()
+    # Internal column keys kept for backward compatibility with charts.py display_names mapping.
     d["Beneficial reliance"] = ((d["follows_ai"] == 1) & (d["ai_correct"] == 1)).astype(int)
     d["Over-reliance"] = ((d["follows_ai"] == 1) & (d["ai_correct"] == 0)).astype(int)
     d["Beneficial override"] = ((d["follows_ai"] == 0) & (d["ai_correct"] == 0)).astype(int)
