@@ -17,6 +17,7 @@ Terminals: quiz_failed, already_completed.
 from __future__ import annotations
 
 from typing import Any
+import os
 
 import streamlit as st
 
@@ -91,6 +92,7 @@ from utils import (
     optimal_decision,
     performance_tier,
     trial_cost,
+    is_demo_mode,
 )
 
 
@@ -700,6 +702,15 @@ def _advance_after_practice() -> None:
 
 def _advance_to_next(just_finished_idx: int) -> None:
     """Move to the appropriate next phase after a trial (or its feedback) is done."""
+    if is_demo_mode():
+        if just_finished_idx == 3:
+            _set_phase("demo_end")
+            return
+        else:
+            st.session_state.current_trial_index = just_finished_idx + 1
+            _set_phase("trial", trial_index=just_finished_idx + 1)
+            return
+
     if just_finished_idx == -2:
         st.session_state.current_trial_index = -1
         _set_phase("trial", trial_index=-1)
@@ -868,3 +879,52 @@ def already_completed_screen() -> None:
     inject_css()
     st.title("Thank you")
     st.markdown(ALREADY_COMPLETED_TEXT)
+
+# =============================================================================
+# Demo Screens
+# =============================================================================
+
+def demo_intro_screen() -> None:
+    inject_css()
+    st.title("Experiment Demo")
+    st.markdown(
+        "This demo lets you experience the three protocol types used in the study. "
+        "The real experiment had 18 scored trials plus practice trials.\n\n"
+        "You will see exactly 3 loan cases: one without AI, one where you see the AI first, "
+        "and one where you make an initial decision before seeing the AI."
+    )
+    if st.button("Start Demo", type="primary"):
+        _set_phase("trial")
+
+def demo_end_screen() -> None:
+    inject_css()
+    st.title("Demo Complete")
+    
+    responses = st.session_state.get("demo_responses", [])
+    
+    approvals = sum(1 for r in responses if r.get("decision_final") == 1)
+    rejections = sum(1 for r in responses if r.get("decision_final") == 0)
+    
+    hf_trial = next((r for r in responses if r.get("protocol") == "human_first"), None)
+    revised_prob = False
+    if hf_trial and hf_trial.get("prob_estimate_init") is not None and hf_trial.get("prob_estimate_final") is not None:
+        revised_prob = hf_trial["prob_estimate_init"] != hf_trial["prob_estimate_final"]
+        
+    st.markdown(f"**Demo Summary:**\n- You approved **{approvals}** loans and rejected **{rejections}** loans.")
+    if hf_trial:
+        if revised_prob:
+            st.markdown("- In the human-first trial, you **revised** your probability estimate after seeing the AI.")
+        else:
+            st.markdown("- In the human-first trial, you **kept** your original probability estimate after seeing the AI.")
+
+    st.markdown("---")
+    st.markdown(
+        "In the real study, 100 participants completed 18 scored trials. "
+        "The results dashboard shows aggregate behavior from the completed experiment."
+    )
+    
+    demo_url = st.secrets.get("SUMMARY_APP_URL", "") or os.getenv("SUMMARY_APP_URL", "")
+    if demo_url:
+        st.link_button("Return to Dashboard", demo_url)
+    else:
+        st.caption("You may now close this window and return to the dashboard.")

@@ -5,9 +5,25 @@ Used by experiment_logic, ui_components, and screens.
 
 import hashlib
 import math
+import os
 import time
 
+import streamlit as st
 from config import C_FN, C_FP, TAU, HOME_OWNERSHIP_VERB, PURPOSE_DISPLAY
+
+# =============================================================================
+# Demo Mode Check
+# =============================================================================
+
+def is_demo_mode() -> bool:
+    """Check if demo mode is enabled via URL, secrets, or env."""
+    if st.query_params.get("demo") == "true":
+        return True
+    if "demo_mode" in st.secrets and st.secrets["demo_mode"]:
+        return True
+    if os.getenv("DEMO_MODE") == "true":
+        return True
+    return False
 
 
 # =============================================================================

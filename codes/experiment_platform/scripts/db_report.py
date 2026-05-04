@@ -20,9 +20,16 @@ def load_client():
     )
 
 
-def fetch_table(client, table_name: str) -> pd.DataFrame:
-    response = client.table(table_name).select("*").execute()
-    return pd.DataFrame(response.data or [])
+def fetch_table(client, table_name: str, page_size: int = 1000) -> pd.DataFrame:
+    rows, offset = [], 0
+    while True:
+        response = client.table(table_name).select("*").range(offset, offset + page_size - 1).execute()
+        batch = response.data or []
+        rows.extend(batch)
+        if len(batch) < page_size:
+            break
+        offset += page_size
+    return pd.DataFrame(rows)
 
 
 def print_summary(participants: pd.DataFrame, trials: pd.DataFrame, quiz: pd.DataFrame) -> None:

@@ -103,6 +103,36 @@ def build_trial_sequence(participant_id: str, group: str) -> list[dict[str, Any]
     return sequence
 
 
+def build_demo_trial_sequence() -> list[dict[str, Any]]:
+    """Returns exactly 3 trials for the demo mode using curated cases."""
+    if len(EXPERIMENTAL_CASES) >= 13:
+        cases = [EXPERIMENTAL_CASES[0], EXPERIMENTAL_CASES[6], EXPERIMENTAL_CASES[12]]
+    else:
+        cases = EXPERIMENTAL_CASES[:3]
+        
+    sequence = [
+        {
+            "trial_index": 1,
+            "case": cases[0],
+            "protocol": "no_ai",
+            "block": "demo",
+        },
+        {
+            "trial_index": 2,
+            "case": cases[1],
+            "protocol": "ai_first",
+            "block": "demo",
+        },
+        {
+            "trial_index": 3,
+            "case": cases[2],
+            "protocol": "human_first",
+            "block": "demo",
+        }
+    ]
+    return sequence
+
+
 # =============================================================================
 # Scoring
 # =============================================================================

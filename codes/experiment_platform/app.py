@@ -16,11 +16,14 @@ import streamlit as st
 
 from config import EXPERIMENT_TITLE
 from database import get_participant_by_session
-from experiment_logic import build_trial_sequence
+from experiment_logic import build_trial_sequence, build_demo_trial_sequence
+from utils import is_demo_mode
 from screens import (
     already_completed_screen,
     block_intro_screen,
     consent_screen,
+    demo_intro_screen,
+    demo_end_screen,
     demographics_screen,
     glossary_screen,
     performance_screen,
@@ -38,6 +41,8 @@ from screens import (
 
 PHASE_ROUTER = {
     "consent":             consent_screen,
+    "demo_intro":          demo_intro_screen,
+    "demo_end":            demo_end_screen,
     "demographics":        demographics_screen,
     "glossary":            glossary_screen,
     "quiz":                quiz_screen,
@@ -87,6 +92,16 @@ def _resume_or_start(sid: str) -> None:
         # Already initialized in this Streamlit session — nothing to do.
         return
 
+    if is_demo_mode():
+        st.session_state.participant_id = "demo_user"
+        st.session_state.participant_number = 999
+        st.session_state.participant_group = "group_1"
+        st.session_state.current_trial_index = 1
+        st.session_state.phase = "demo_intro"
+        st.session_state.trial_sequence = build_demo_trial_sequence()
+        st.session_state.demo_responses = []
+        return
+
     try:
         participant = get_participant_by_session(sid)
     except Exception:
@@ -130,6 +145,9 @@ def main() -> None:
         layout="centered",
         initial_sidebar_state="expanded",
     )
+
+    if is_demo_mode():
+        st.warning("Demo mode — responses are not stored.")
 
     sid = _ensure_session_id()
     _resume_or_start(sid)

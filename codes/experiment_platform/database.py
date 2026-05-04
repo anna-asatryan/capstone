@@ -13,6 +13,8 @@ from typing import Any
 import streamlit as st
 from supabase import Client, create_client
 
+from utils import is_demo_mode
+
 
 # =============================================================================
 # Client
@@ -62,6 +64,9 @@ def create_participant(session_id: str) -> dict[str, Any]:
     Returns the full participant row including id, participant_number, and
     participant_group.
     """
+    if is_demo_mode():
+        return {"id": "demo_user", "participant_number": 999, "participant_group": "group_1", "completed": False}
+
     client = get_client()
 
     def _insert():
@@ -100,6 +105,8 @@ def create_participant(session_id: str) -> dict[str, Any]:
 def update_participant_demographics(
     participant_id: str, age_range: str, education: str
 ) -> None:
+    if is_demo_mode():
+        return
     client = get_client()
 
     def _update():
@@ -113,6 +120,8 @@ def update_participant_demographics(
 def update_participant_phase(
     participant_id: str, phase: str, trial_index: int | None = None
 ) -> None:
+    if is_demo_mode():
+        return
     client = get_client()
     payload: dict[str, Any] = {"current_phase": phase}
     if trial_index is not None:
@@ -132,6 +141,8 @@ def update_participant_reflection(
     """Store the two metacognitive self-report answers collected just before
     the trust rating. These are used to compare self-reported reliance
     strategy with actual behavioral reliance patterns computed from trials."""
+    if is_demo_mode():
+        return
     client = get_client()
 
     def _update():
@@ -151,6 +162,8 @@ def complete_participant(
     total_cost: float,
     optimal_cost: float,
 ) -> None:
+    if is_demo_mode():
+        return
     client = get_client()
 
     def _update():
@@ -174,6 +187,8 @@ def get_participant_by_session(session_id: str) -> dict[str, Any] | None:
     Most recent is used because a user could reload and retake if their
     previous attempt was incomplete; we want to resume their latest.
     """
+    if is_demo_mode():
+        return None
     client = get_client()
 
     def _select():
@@ -200,6 +215,12 @@ def insert_trial(trial_row: dict[str, Any]) -> None:
     to reject duplicates. Upsert by that constraint so a retry never fails and
     never creates a phantom second trial.
     """
+    if is_demo_mode():
+        if "demo_responses" not in st.session_state:
+            st.session_state.demo_responses = []
+        st.session_state.demo_responses.append(trial_row)
+        return
+
     client = get_client()
 
     def _upsert():
@@ -212,6 +233,8 @@ def insert_trial(trial_row: dict[str, Any]) -> None:
 
 def get_participant_trials(participant_id: str) -> list[dict[str, Any]]:
     """Return all trials for a participant, ordered by trial_index."""
+    if is_demo_mode():
+        return st.session_state.get("demo_responses", [])
     client = get_client()
 
     def _select():
@@ -238,6 +261,8 @@ def insert_quiz_response(
     selected_answer: str,
     is_correct: bool,
 ) -> None:
+    if is_demo_mode():
+        return
     client = get_client()
 
     def _insert():
