@@ -120,10 +120,10 @@ h3 { font-size: 1.05rem !important; margin-top: 1.1rem !important; }
 
 .metric-value {
   color: var(--ink);
-  font-size: 1.68rem;
-  font-weight: 820;
-  letter-spacing: -0.045em;
-  line-height: 1.05;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
 }
 
 .metric-note {

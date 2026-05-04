@@ -25,14 +25,15 @@ def tufte_layout(fig: go.Figure, height: int = 340, title: str | None = None) ->
         template=PLOTLY_TEMPLATE,
         height=height,
         title={"text": title or "", "x": 0.02, "xanchor": "left", "font": {"size": 18, "color": "#111827"}},
-        margin=dict(l=24, r=20, t=52 if title else 24, b=28),
+        margin=dict(l=24, r=20, t=80 if title else 24, b=28),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family="Inter, Arial, sans-serif", color="#111827", size=13),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        dragmode=False,
     )
-    fig.update_xaxes(showgrid=False, zeroline=False, linecolor="#e5e7eb", tickfont=dict(color="#475569"))
-    fig.update_yaxes(gridcolor="#e5e7eb", zeroline=False, linecolor="#e5e7eb", tickfont=dict(color="#475569"))
+    fig.update_xaxes(fixedrange=True, showgrid=False, zeroline=False, linecolor="#e5e7eb", tickfont=dict(color="#475569"))
+    fig.update_yaxes(fixedrange=True, gridcolor="#e5e7eb", zeroline=False, linecolor="#e5e7eb", tickfont=dict(color="#475569"))
     return fig
 
 
