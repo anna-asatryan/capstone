@@ -1,0 +1,3 @@
+case_id,loan_amnt,term,int_rate,dti,revol_util,home_ownership,purpose,log_annual_inc,credit_history_years,y_true,pred_prob,difficulty_score,difficulty_tier,model_pred_class,correct,confidence,conf_bin,fp,fn,model_decision,optimal_decision,model_optimal,case_position,block
+946400,6600,36 months,8.39,10.38,57.4,MORTGAGE,credit_card,11.082157933374816,8.082135523613964,0,0.05922077922077922,0.1136095436850325,easy,0,1,0.9407792207792208,high,0,0,1,1,1,-2,practice
+934189,15000,60 months,24.99,24.19,27.6,OWN,small_business,10.5713425658087,14.247775496235455,1,0.6239782016348775,0.7444359170466324,hard,1,1,0.6239782016348775,high,0,0,0,0,1,-1,practice
