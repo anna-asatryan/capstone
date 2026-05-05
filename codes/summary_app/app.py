@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import base64
+import textwrap
 from pathlib import Path
 
 import numpy as np
@@ -48,6 +49,38 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 load_css()
+
+st.markdown(
+    """
+    <style>
+    @media (max-width: 760px) {
+        .block-container {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            padding-bottom: 7rem !important;
+            padding-top: 1rem !important;
+        }
+        div[data-testid="column"] {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+        }
+        div[data-testid="stHorizontalBlock"] {
+            flex-wrap: wrap !important;
+        }
+        h1 {
+            font-size: 1.8rem !important;
+            line-height: 1.15 !important;
+        }
+        h2, h3 {
+            line-height: 1.2 !important;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 
 def fmt_pct(x: float, digits: int = 1) -> str:
@@ -311,246 +344,384 @@ def image_to_base64(path: Path) -> str:
         return base64.b64encode(f.read()).decode("utf-8")
 
 
-def render_protocol_workflow_background() -> None:
-    """Render equal-height workflow cards inside a single tile with the image as a bottom visual band."""
+def render_protocol_workflow_phone_safe() -> None:
+    """Compact responsive workflow section with a merged bottom image band."""
+    bg_style = ""
     if HAI_IMAGE.exists():
         bg64 = image_to_base64(HAI_IMAGE)
-        image_markup = f"<img class='workflow-bottom-image' src='data:image/png;base64,{bg64}' alt='Human and AI hands nearly touching' />"
-    else:
-        image_markup = ""
+        bg_style = f"background-image: url('data:image/png;base64,{bg64}');"
 
-bg64 = image_to_base64(HAI_IMAGE) if HAI_IMAGE.exists() else ""
-
-components.html(
-    f'''
-    <div class="workflow-wrap">
-        <div class="workflow-hero">
-            <div class="workflow-content">
-                <div class="workflow-topline">STUDY WORKFLOWS</div>
-
-                <div class="workflow-headline">Decision support, not decision replacement.</div>
-
-                <div class="workflow-subtitle">
-                    AI-supported decisions improved performance, but better outcomes still depend on active human judgment.
-                    These workflows test whether the timing of AI advice changes decision quality and reliance.
-                </div>
-
-                <div class="workflow-grid">
-                    <div class="workflow-card">
-                        <div>
-                            <div class="workflow-label">01</div>
-                            <div class="workflow-title">Independent Review</div>
-                            <div class="workflow-main">Human decides without AI support.</div>
-                        </div>
-                        <div class="workflow-note">Baseline condition for unaided decision quality.</div>
-                    </div>
-
-                    <div class="workflow-card">
-                        <div>
-                            <div class="workflow-label">02</div>
-                            <div class="workflow-title">AI-Assisted Review</div>
-                            <div class="workflow-main">AI default probability is shown before the judgment.</div>
-                        </div>
-                        <div class="workflow-note">Tests early advice exposure and possible anchoring.</div>
-                    </div>
-
-                    <div class="workflow-card">
-                        <div>
-                            <div class="workflow-label">03</div>
-                            <div class="workflow-title">Sequential Review</div>
-                            <div class="workflow-main">Human judges first, sees AI, then finalizes.</div>
-                        </div>
-                        <div class="workflow-note">Tests whether deliberation before advice improves revision quality.</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="workflow-art">
-                <img
-                    src="data:image/png;base64,{bg64}"
-                    alt="Human and AI"
-                    class="workflow-art-img"
-                />
-                <div class="workflow-art-fade"></div>
-            </div>
-        </div>
-    </div>
-
-    <style>
-        html, body {{
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            color: #0f172a;
-        }}
-
-        .workflow-wrap {{
-            box-sizing: border-box;
-            width: 100%;
-            padding: 0;
-        }}
-
-        .workflow-hero {{
-            box-sizing: border-box;
-            width: 100%;
-            border: 1px solid rgba(15, 23, 42, 0.14);
-            border-radius: 18px;
-            box-shadow: 0 14px 35px rgba(15, 23, 42, 0.07);
+    st.markdown(
+        """
+        <style>
+        .wf-shell {
+            position: relative;
             overflow: hidden;
+            margin: 0.55rem 0 1rem 0;
+            border: 1px solid rgba(15, 23, 42, 0.12);
+            border-radius: 18px;
             background: linear-gradient(180deg, #f8fbfb 0%, #eef5f4 100%);
-        }}
-
-        .workflow-content {{
-            padding: 22px 22px 0 22px;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+        }
+        .wf-content {
             position: relative;
             z-index: 2;
-        }}
-
-        .workflow-topline {{
-            font-size: 11px;
+            padding: 1rem 1rem 0 1rem;
+        }
+        .wf-kicker {
+            font-size: 0.68rem;
             line-height: 1;
             font-weight: 800;
             letter-spacing: 0.13em;
             color: #0f766e;
-            margin-bottom: 10px;
-        }}
-
-        .workflow-headline {{
-            max-width: 720px;
-            font-size: 22px;
+            margin-bottom: 0.5rem;
+        }
+        .wf-title {
+            font-size: 1.15rem;
             line-height: 1.15;
             font-weight: 850;
-            margin-bottom: 8px;
-        }}
-
-        .workflow-subtitle {{
-            max-width: 820px;
-            font-size: 14px;
+            color: #0f172a;
+            margin-bottom: 0.45rem;
+        }
+        .wf-subtitle {
+            font-size: 0.88rem;
             line-height: 1.45;
             color: #334155;
-            margin-bottom: 18px;
-        }}
-
-        .workflow-grid {{
+            margin-bottom: 0.8rem;
+            max-width: 860px;
+        }
+        .wf-cards {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 14px;
-            align-items: stretch;
-        }}
-
-        .workflow-card {{
-            box-sizing: border-box;
-            min-height: 145px;
-            height: 100%;
-            padding: 16px;
-            border-radius: 15px;
-            border: 1px solid rgba(15, 23, 42, 0.13);
+            gap: 0.7rem;
+            position: relative;
+            z-index: 3;
+        }
+        .wf-card {
+            min-height: 112px;
+            padding: 0.8rem 0.85rem;
+            border-radius: 14px;
+            border: 1px solid rgba(15, 23, 42, 0.10);
             background: rgba(255, 255, 255, 0.92);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-        }}
-
-        .workflow-label {{
+            box-sizing: border-box;
+        }
+        .wf-badge {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            height: 22px;
-            min-width: 30px;
+            min-width: 28px;
+            height: 20px;
             padding: 0 8px;
             border-radius: 999px;
             background: rgba(15, 118, 110, 0.10);
             color: #0f766e;
-            font-size: 11px;
+            font-size: 0.68rem;
             font-weight: 800;
-            margin-bottom: 9px;
-        }}
-
-        .workflow-title {{
-            font-size: 18px;
-            line-height: 1.15;
-            font-weight: 850;
-            margin-bottom: 8px;
-        }}
-
-        .workflow-main {{
-            font-size: 14px;
-            line-height: 1.4;
+            margin-bottom: 0.45rem;
+        }
+        .wf-card-title {
+            font-size: 0.98rem;
+            line-height: 1.18;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 0.35rem;
+        }
+        .wf-card-main {
+            font-size: 0.84rem;
+            line-height: 1.34;
             color: #111827;
-        }}
-
-        .workflow-note {{
-            margin-top: 14px;
-            font-size: 12px;
-            line-height: 1.35;
+            margin-bottom: 0.55rem;
+        }
+        .wf-card-note {
+            font-size: 0.74rem;
+            line-height: 1.3;
             color: #64748b;
-        }}
-
-        .workflow-art {{
+        }
+        .wf-band {
             position: relative;
-            width: calc(100% + 44px);
-            height: 150px;
-            margin: 10px -22px 0 -22px;
-            overflow: hidden;
-            background: #eef5f4;
-        }}
-
-        .workflow-art-img {{
             width: 100%;
-            height: 100%;
-            display: block;
-            object-fit: cover;
-            object-position: center 45%;
-            opacity: 0.88;
-            transform: scale(1.04);
-        }}
-
-        .workflow-art-fade {{
+            height: 118px;
+            margin-top: -8px;
+            background-color: #eef5f4;
+            background-size: cover;
+            background-position: center 54%;
+            background-repeat: no-repeat;
+            opacity: 1;
+        }
+        .wf-band-fade {
             position: absolute;
             inset: 0;
             background:
                 linear-gradient(
                     to bottom,
-                rgba(238, 245, 244, 1.00) 0%,
-                rgba(238, 245, 244, 0.78) 18%,
-                rgba(238, 245, 244, 0.30) 43%,
-                rgba(238, 245, 244, 0.06) 74%,
-                rgba(238, 245, 244, 0.00) 100%
-            ),
-            linear-gradient(
-                to right,
-                rgba(238, 245, 244, 0.90) 0%,
-                rgba(238, 245, 244, 0.10) 13%,
-                rgba(238, 245, 244, 0.00) 28%,
-                rgba(238, 245, 244, 0.00) 72%,
-            rgba(238, 245, 244, 0.10) 87%,
-            rgba(238, 245, 244, 0.90) 100%
-        );
-    pointer-events: none;
-    }}
+                    rgba(238, 245, 244, 1.00) 0%,
+                    rgba(238, 245, 244, 0.84) 14%,
+                    rgba(238, 245, 244, 0.38) 42%,
+                    rgba(238, 245, 244, 0.08) 72%,
+                    rgba(238, 245, 244, 0.00) 100%
+                ),
+                linear-gradient(
+                    to right,
+                    rgba(238, 245, 244, 0.75) 0%,
+                    rgba(238, 245, 244, 0.08) 15%,
+                    rgba(238, 245, 244, 0.00) 32%,
+                    rgba(238, 245, 244, 0.00) 68%,
+                    rgba(238, 245, 244, 0.08) 85%,
+                    rgba(238, 245, 244, 0.75) 100%
+                );
+        }
+        @media (max-width: 760px) {
+            .wf-shell {
+                margin: 0.45rem 0 0.85rem 0;
+            }
+            .wf-content {
+                padding: 0.85rem 0.85rem 0 0.85rem;
+            }
+            .wf-kicker {
+                font-size: 0.64rem;
+                margin-bottom: 0.42rem;
+            }
+            .wf-title {
+                font-size: 1.02rem;
+            }
+            .wf-subtitle {
+                font-size: 0.80rem;
+                line-height: 1.38;
+                margin-bottom: 0.65rem;
+            }
+            .wf-cards {
+                display: flex;
+                gap: 0.6rem;
+                overflow-x: auto;
+                overflow-y: hidden;
+                padding: 0 0 0.2rem 0;
+                scroll-snap-type: x proximity;
+                -webkit-overflow-scrolling: touch;
+            }
+            .wf-cards::-webkit-scrollbar {
+                display: none;
+            }
+            .wf-card {
+                flex: 0 0 78%;
+                min-width: 220px;
+                min-height: 96px;
+                scroll-snap-align: start;
+                padding: 0.72rem;
+            }
+            .wf-card-title {
+                font-size: 0.92rem;
+            }
+            .wf-card-main {
+                font-size: 0.80rem;
+                margin-bottom: 0.4rem;
+            }
+            .wf-card-note {
+                font-size: 0.70rem;
+            }
+            .wf-band {
+                height: 92px;
+                background-position: center 58%;
+            }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
-        @media (max-width: 760px) {{
-            .workflow-content {{
-                padding: 16px 16px 0 16px;
-            }}
+    html = textwrap.dedent(
+        f"""
+        <div class="wf-shell">
+            <div class="wf-content">
+                <div class="wf-kicker">STUDY WORKFLOWS</div>
+                <div class="wf-title">Decision support, not decision replacement.</div>
+                <div class="wf-subtitle">
+                    AI-supported decisions improved performance, but better outcomes still depend on active human judgment.
+                    The study compares three ways of timing AI advice.
+                </div>
 
-            .workflow-grid {{
-                grid-template-columns: 1fr;
-            }}
+                <div class="wf-cards">
+                    <div class="wf-card">
+                        <div>
+                            <div class="wf-badge">01</div>
+                            <div class="wf-card-title">Independent Review</div>
+                            <div class="wf-card-main">Human decides without AI support.</div>
+                        </div>
+                        <div class="wf-card-note">Baseline condition for unaided decision quality.</div>
+                    </div>
 
-            .workflow-card {{
-                min-height: 118px;
-            }}
+                    <div class="wf-card">
+                        <div>
+                            <div class="wf-badge">02</div>
+                            <div class="wf-card-title">AI-Assisted Review</div>
+                            <div class="wf-card-main">AI default probability is shown before the judgment.</div>
+                        </div>
+                        <div class="wf-card-note">Tests early advice exposure and possible anchoring.</div>
+                    </div>
 
-            .workflow-art {{
-                height: 100px;
-            }}
-        }}
-    </style>
-    ''',
-    height=450,
-    scrolling=False,
-)
+                    <div class="wf-card">
+                        <div>
+                            <div class="wf-badge">03</div>
+                            <div class="wf-card-title">Sequential Review</div>
+                            <div class="wf-card-main">Human judges first, sees AI, then finalizes.</div>
+                        </div>
+                        <div class="wf-card-note">Tests whether deliberation before advice improves revision quality.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="wf-band" style="{bg_style}">
+                <div class="wf-band-fade"></div>
+            </div>
+        </div>
+        """
+    )
+
+    # st.markdown can render nested indented HTML as a code block. st.html renders it as HTML.
+    if hasattr(st, "html"):
+        st.html(html)
+    else:
+        components.html(html, height=360, scrolling=False)
+    if not HAI_IMAGE.exists():
+        st.caption("Human–AI image not found. Expected: assets/hai1.png")
+
+
+def case_protocol_delta_heatmap_vertical(trials: pd.DataFrame, mode: str = "Cost benefit"):
+    """Phone-safe case × protocol heatmap: cases as rows, AI protocols as columns."""
+    import plotly.graph_objects as go
+
+    required = {"case_id", "protocol"}
+    if trials.empty or not required.issubset(trials.columns):
+        return go.Figure()
+
+    d = trials.copy()
+    if "case_position" not in d.columns:
+        d["case_position"] = d["case_id"].astype(str)
+
+    if mode == "Accuracy benefit":
+        value_col = "correct"
+        title_metric = "Accuracy benefit"
+        subtitle = "Protocol accuracy minus no-AI accuracy"
+    elif mode == "Approval change":
+        value_col = "decision_final"
+        title_metric = "Approval change"
+        subtitle = "Protocol approval rate minus no-AI approval rate"
+    else:
+        value_col = "trial_cost"
+        title_metric = "Cost benefit"
+        subtitle = "No-AI cost minus protocol cost"
+
+    if value_col not in d.columns:
+        return go.Figure()
+
+    agg = (
+        d.groupby(["case_id", "case_position", "protocol"], dropna=False)
+        .agg(value=(value_col, "mean"), n=(value_col, "count"))
+        .reset_index()
+    )
+
+    optional_cols = [c for c in ["difficulty_tier", "pred_prob", "y_true"] if c in d.columns]
+    if optional_cols:
+        meta = d.groupby(["case_id"], dropna=False)[optional_cols].first().reset_index()
+        agg = agg.merge(meta, on="case_id", how="left")
+
+    base = agg[agg["protocol"] == "no_ai"][["case_id", "value"]].rename(columns={"value": "no_ai_value"})
+    comp = agg[agg["protocol"].isin(["ai_first", "human_first"])].merge(base, on="case_id", how="left")
+
+    if mode == "Cost benefit":
+        comp["benefit"] = comp["no_ai_value"] - comp["value"]
+    else:
+        comp["benefit"] = comp["value"] - comp["no_ai_value"]
+
+    comp["Protocol"] = comp["protocol"].map({"ai_first": "AI-first", "human_first": "Human-first"})
+    comp["case_position_num"] = pd.to_numeric(comp["case_position"], errors="coerce")
+
+    case_order_df = (
+        comp[["case_id", "case_position", "case_position_num"]]
+        .drop_duplicates()
+        .sort_values(["case_position_num", "case_position"], na_position="last")
+    )
+
+    case_labels = []
+    for _, r in case_order_df.iterrows():
+        if pd.notna(r["case_position_num"]):
+            case_labels.append(f"C{int(r['case_position_num'])}")
+        else:
+            case_labels.append(f"C{str(r['case_position'])}")
+
+    comp["Case"] = comp["case_id"].astype(str).map(dict(zip(case_order_df["case_id"].astype(str), case_labels)))
+
+    y_order = case_labels
+    x_order = ["AI-first", "Human-first"]
+
+    pivot = (
+        comp.pivot_table(index="Case", columns="Protocol", values="benefit", aggfunc="mean")
+        .reindex(index=y_order, columns=x_order)
+    )
+
+    hover = []
+    for case in y_order:
+        row = []
+        for proto in x_order:
+            rr = comp[(comp["Case"] == case) & (comp["Protocol"] == proto)]
+            if rr.empty:
+                row.append("No data<extra></extra>")
+                continue
+            r = rr.iloc[0]
+            difficulty = r.get("difficulty_tier", "—")
+            pred_prob = r.get("pred_prob", np.nan)
+            y_true = r.get("y_true", "—")
+            pred_txt = "—" if pd.isna(pred_prob) else f"{pred_prob:.3f}"
+            outcome_txt = "Default" if y_true == 1 else "Paid" if y_true == 0 else "—"
+            row.append(
+                f"<b>{case}</b><br>"
+                f"Protocol: {proto}<br>"
+                f"Difficulty: {difficulty}<br>"
+                f"AI risk: {pred_txt}<br>"
+                f"Outcome: {outcome_txt}<br>"
+                f"No-AI value: {r['no_ai_value']:.3f}<br>"
+                f"Protocol value: {r['value']:.3f}<br>"
+                f"Benefit: {r['benefit']:.3f}<extra></extra>"
+            )
+        hover.append(row)
+
+    z = pivot.values
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=z,
+            x=x_order,
+            y=y_order,
+            text=np.round(z, 2),
+            texttemplate="%{text}",
+            textfont={"size": 10},
+            hovertemplate=hover,
+            colorscale=[
+                [0.00, "#dc2626"],
+                [0.45, "#fee2e2"],
+                [0.50, "#f8fafc"],
+                [0.55, "#ccfbf1"],
+                [1.00, "#0f766e"],
+            ],
+            zmid=0,
+            colorbar=dict(title="Benefit", len=0.70, thickness=10),
+        )
+    )
+
+    fig.update_layout(
+        title=dict(
+            text=f"Where AI helped — {title_metric}<br><sup>{subtitle}</sup>",
+            x=0.02,
+            xanchor="left",
+            font=dict(size=16),
+        ),
+        height=720,
+        margin=dict(l=52, r=12, t=76, b=42),
+        xaxis=dict(title="", side="top", tickfont=dict(size=12)),
+        yaxis=dict(title="Loan case", autorange="reversed", tickfont=dict(size=11)),
+    )
+    return fig
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Overview
@@ -564,11 +735,8 @@ if page == "Overview":
     hf_acc = summary.loc[summary["protocol"] == "human_first", "Accuracy"].squeeze() if "human_first" in set(summary["protocol"]) else np.nan
     adjusted_pct = 1.0 - woa.get("zero_pct", np.nan) if woa.get("n", 0) and pd.notna(woa.get("zero_pct", np.nan)) else np.nan
 
+    render_protocol_workflow_phone_safe()
     render_demo_callout()
-
-    render_protocol_workflow_background()
-
-
 
     metric_cards(
         [
@@ -584,38 +752,36 @@ if page == "Overview":
         "human-first showed the strongest numerical pattern, but the timing contrast against AI-first was not statistically decisive."
     )
 
-    col1, col2 = st.columns([1.1, 1])
-    with col1:
-        overview_metric = st.segmented_control(
-            "Show",
-            ["Decision cost", "Accuracy"],
-            default="Decision cost",
-            key="overview_bar_metric",
-        )
-        if overview_metric == "Accuracy":
-            st.plotly_chart(
-                bar_by_protocol(summary, "Accuracy", "Accuracy by protocol", lower_is_better=False),
-                use_container_width=True,
-                config={"displayModeBar": False},
-                key="plot_overview_accuracy",
-            )
-            small_note("What to notice: both AI-supported protocols should be read against the no-AI baseline; higher accuracy is better.")
-        else:
-            st.plotly_chart(
-                bar_by_protocol(summary, "Mean cost", "Decision cost by protocol", lower_is_better=True),
-                use_container_width=True,
-                config={"displayModeBar": False},
-                key="plot_overview_cost",
-            )
-            small_note("What to notice: both AI-supported protocols should be read against the no-AI baseline; lower cost is better.")
-    with col2:
+    overview_metric = st.segmented_control(
+        "Show",
+        ["Decision cost", "Accuracy"],
+        default="Decision cost",
+        key="overview_bar_metric",
+    )
+    if overview_metric == "Accuracy":
         st.plotly_chart(
-            switch_sankey(switch),
+            bar_by_protocol(summary, "Accuracy", "Accuracy by protocol", lower_is_better=False),
             use_container_width=True,
             config={"displayModeBar": False},
-            key="plot_overview_sankey",
+            key="plot_overview_accuracy",
         )
-        small_note("What to notice: sequential review directly shows whether AI exposure corrected or worsened initial judgments.")
+        small_note("What to notice: both AI-supported protocols should be read against the no-AI baseline; higher accuracy is better.")
+    else:
+        st.plotly_chart(
+            bar_by_protocol(summary, "Mean cost", "Decision cost by protocol", lower_is_better=True),
+            use_container_width=True,
+            config={"displayModeBar": False},
+            key="plot_overview_cost",
+        )
+        small_note("What to notice: both AI-supported protocols should be read against the no-AI baseline; lower cost is better.")
+
+    st.plotly_chart(
+        switch_sankey(switch, height=360),
+        use_container_width=True,
+        config={"displayModeBar": False},
+        key="plot_overview_sankey",
+    )
+    small_note("What to notice: sequential review directly shows whether AI exposure corrected or worsened initial judgments.")
 
     # ── Case × Protocol delta heatmap ─────────────────────────────────────────
     section_kicker("Where AI helped — case-by-case")
@@ -626,10 +792,10 @@ if page == "Overview":
         key="overview_heatmap_mode",
     )
     st.plotly_chart(
-        case_protocol_delta_heatmap(view, mode=heatmap_mode or "Cost benefit"),
+        case_protocol_delta_heatmap_vertical(view, mode=heatmap_mode or "Cost benefit"),
         use_container_width=True,
         config={"displayModeBar": False},
-        key="plot_overview_delta_heatmap",
+        key="plot_overview_delta_heatmap_vertical",
     )
     small_note(
         "Green = AI-supported protocol outperformed no-AI for that case. "
