@@ -91,6 +91,48 @@ def fmt_num(x: float, digits: int = 3) -> str:
     return "—" if pd.isna(x) else f"{x:.{digits}f}"
 
 
+PLOTLY_PHONE_CONFIG = {
+    "displayModeBar": False,
+    "scrollZoom": False,
+    "doubleClick": False,
+    "responsive": True,
+}
+
+
+def phone_safe_fig(fig, height: int | None = None):
+    """Disable pan/zoom gestures and reduce mobile layout problems for Plotly figures."""
+    try:
+        fig.update_layout(dragmode=False)
+        if height is not None:
+            fig.update_layout(height=height)
+        fig.update_xaxes(fixedrange=True)
+        fig.update_yaxes(fixedrange=True)
+        # Put legends below charts instead of on top of titles/plots on phones.
+        fig.update_layout(
+            legend=dict(
+                orientation="h",
+                yanchor="top",
+                y=-0.22,
+                xanchor="left",
+                x=0,
+                font=dict(size=10),
+            ),
+            margin=dict(l=48, r=18, t=62, b=78),
+        )
+    except Exception:
+        pass
+    return fig
+
+
+def plotly_chart_safe(fig, *, key: str, height: int | None = None) -> None:
+    st.plotly_chart(
+        phone_safe_fig(fig, height=height),
+        use_container_width=True,
+        config=PLOTLY_PHONE_CONFIG,
+        key=key,
+    )
+
+
 def get_demo_url() -> str | None:
     # Works both locally and on Streamlit Cloud.
     try:
@@ -249,6 +291,28 @@ def render_demo_callout() -> None:
             )
         else:
             warning("Demo link not configured yet.")
+
+
+
+def render_overview_toc() -> None:
+    """Compact table of contents for conference viewers scanning on phones."""
+    section_kicker("Explore the evidence")
+    cards = [
+        ("Protocol Comparator", "Compare cost, accuracy, Brier score, approval rate, and paired participant-level differences."),
+        ("Human-First Revision", "Inspect how unaided initial judgments changed after participants saw the AI probability."),
+        ("Reliance Explorer", "Check probability movement toward AI and alignment with the threshold-implied action."),
+        ("Case Explorer", "Move from averages to individual loan cases, including the case-by-protocol heatmap."),
+    ]
+    for page_name, description in cards:
+        with st.container(border=True):
+            left, right = st.columns([3.0, 1.0])
+            with left:
+                st.markdown(f"#### {page_name}")
+                st.caption(description)
+            with right:
+                if st.button("Open", key=f"toc_{page_name}", use_container_width=True):
+                    st.session_state.page_nav = page_name
+                    st.rerun()
 
 app_data = load_data()
 trials = app_data.trials
@@ -752,62 +816,8 @@ if page == "Overview":
         "human-first showed the strongest numerical pattern, but the timing contrast against AI-first was not statistically decisive."
     )
 
-    overview_metric = st.segmented_control(
-        "Show",
-        ["Decision cost", "Accuracy"],
-        default="Decision cost",
-        key="overview_bar_metric",
-    )
-    if overview_metric == "Accuracy":
-        st.plotly_chart(
-            bar_by_protocol(summary, "Accuracy", "Accuracy by protocol", lower_is_better=False),
-            use_container_width=True,
-            config={"displayModeBar": False},
-            key="plot_overview_accuracy",
-        )
-        small_note("What to notice: both AI-supported protocols should be read against the no-AI baseline; higher accuracy is better.")
-    else:
-        st.plotly_chart(
-            bar_by_protocol(summary, "Mean cost", "Decision cost by protocol", lower_is_better=True),
-            use_container_width=True,
-            config={"displayModeBar": False},
-            key="plot_overview_cost",
-        )
-        small_note("What to notice: both AI-supported protocols should be read against the no-AI baseline; lower cost is better.")
+    render_overview_toc()
 
-    st.plotly_chart(
-        switch_sankey(switch, height=360),
-        use_container_width=True,
-        config={"displayModeBar": False},
-        key="plot_overview_sankey",
-    )
-    small_note("What to notice: sequential review directly shows whether AI exposure corrected or worsened initial judgments.")
-
-    # ── Case × Protocol delta heatmap ─────────────────────────────────────────
-    section_kicker("Where AI helped — case-by-case")
-    heatmap_mode = st.segmented_control(
-        "Show benefit as",
-        ["Cost benefit", "Accuracy benefit", "Approval change"],
-        default="Cost benefit",
-        key="overview_heatmap_mode",
-    )
-    st.plotly_chart(
-        case_protocol_delta_heatmap_vertical(view, mode=heatmap_mode or "Cost benefit"),
-        use_container_width=True,
-        config={"displayModeBar": False},
-        key="plot_overview_delta_heatmap_vertical",
-    )
-    small_note(
-        "Green = AI-supported protocol outperformed no-AI for that case. "
-        "Red = no-AI was better. White = no difference. "
-        "Switch the toggle above to inspect cost, accuracy, or approval-rate change."
-    )
-
-    small_note(
-        "Use the sidebar filters for carryover sensitivity checks and difficulty-specific results. Use the top navigation for deeper protocol, reliance, and case-level analysis."
-    )
-
-# ─────────────────────────────────────────────────────────────────────────────
 # Protocol Comparator
 # ─────────────────────────────────────────────────────────────────────────────
 elif page == "Protocol Comparator":
@@ -823,17 +833,17 @@ elif page == "Protocol Comparator":
     selected_metric = st.segmented_control("Metric", list(metric_options.keys()), default="Mean cost")
     metric_col, summary_col, lower_better = metric_options[selected_metric]
 
-    col1, col2 = st.columns([1.1, 1])
-    with col1:
-        st.plotly_chart(bar_by_protocol(summary, summary_col, f"{selected_metric} by protocol", lower_is_better=lower_better), use_container_width=True, config={"displayModeBar": False}, key=f"plot_comp_bar_{selected_metric}")
-    with col2:
-        if metric_col:
-            st.plotly_chart(paired_participant_plot(view, metric_col, f"Participant-level paired view: {selected_metric}"), use_container_width=True, config={"displayModeBar": False}, key=f"plot_comp_paired_{selected_metric}")
-        else:
-            st.plotly_chart(bar_by_protocol(summary, summary_col, f"{selected_metric} by protocol", lower_is_better=True), use_container_width=True, config={"displayModeBar": False}, key=f"plot_comp_bar_alt_{selected_metric}")
+    plotly_chart_safe(
+        bar_by_protocol(summary, summary_col, f"{selected_metric} by protocol", lower_is_better=lower_better),
+        key=f"plot_comp_bar_{selected_metric}",
+    )
 
-    section_kicker("Pairwise participant-level tests")
     if metric_col:
+        plotly_chart_safe(
+            paired_participant_plot(view, metric_col, f"Participant-level paired view: {selected_metric}"),
+            key=f"plot_comp_paired_{selected_metric}",
+        )
+        section_kicker("Pairwise participant-level tests")
         tests = pairwise_protocol_tests(view, metric_col)
         tests_display = tests.copy()
         tests_display["Mean diff"] = tests_display["Mean diff"].map(lambda x: f"{x:.3f}" if pd.notna(x) else "—")
@@ -841,7 +851,7 @@ elif page == "Protocol Comparator":
         tests_display["p"] = tests_display["p"].map(format_p)
         st.dataframe(tests_display, use_container_width=True, hide_index=True)
     else:
-        small_note("Brier score is computed at protocol level; paired participant-level tests are omitted here to avoid sparse per-participant probability-quality claims.")
+        small_note("Brier score is shown once because it is computed at protocol level; paired participant-level tests are omitted to avoid sparse probability-quality claims.")
 
     section_kicker("Protocol summary table")
     show = summary.copy()
@@ -850,7 +860,6 @@ elif page == "Protocol Comparator":
             show[c] = show[c].map(lambda x: f"{x:.3f}" if pd.notna(x) else "—")
     st.dataframe(show.drop(columns=["protocol"], errors="ignore"), use_container_width=True, hide_index=True)
 
-# ─────────────────────────────────────────────────────────────────────────────
 # Human-First Revision
 # ─────────────────────────────────────────────────────────────────────────────
 elif page == "Human-First Revision":
@@ -870,9 +879,9 @@ elif page == "Human-First Revision":
 
     col1, col2 = st.columns([1.15, 1])
     with col1:
-        st.plotly_chart(switch_sankey(switch, height=445), use_container_width=True, config={"displayModeBar": False}, key="plot_hf_sankey")
+        plotly_chart_safe(switch_sankey(switch, height=445), key="plot_hf_sankey", height=445)
     with col2:
-        st.plotly_chart(switch_matrix_heatmap(switch, height=445), use_container_width=True, config={"displayModeBar": False}, key="plot_hf_heatmap")
+        plotly_chart_safe(switch_matrix_heatmap(switch, height=445), key="plot_hf_heatmap", height=445)
 
     section_kicker("Revision paths")
     summary_switch = switch["summary"].copy()
@@ -920,11 +929,11 @@ elif page == "Reliance Explorer":
             d_woa = d_woa[d_woa["ai_correct"] == 1]
         elif ai_correct_filter == "Action disagreed with outcome":
             d_woa = d_woa[d_woa["ai_correct"] == 0]
-        st.plotly_chart(woa_histogram(d_woa, adjusters_only=adjusters_only), use_container_width=True, config={"displayModeBar": False}, key="plot_reliance_woa")
+        plotly_chart_safe(woa_histogram(d_woa, adjusters_only=adjusters_only), key="plot_reliance_woa")
 
     col1, col2 = st.columns([1.1, 1])
     with col1:
-        st.plotly_chart(reliance_stacked_bar(rel), use_container_width=True, config={"displayModeBar": False}, key="plot_reliance_stacked")
+        plotly_chart_safe(reliance_stacked_bar(rel), key="plot_reliance_stacked")
     with col2:
         if not rel.empty:
             rel_show = rel.drop(columns=["protocol"], errors="ignore").copy()
@@ -939,7 +948,7 @@ elif page == "Reliance Explorer":
     if benefit_path.exists():
         benefit = pd.read_csv(benefit_path)
         if "ai_benefit_accuracy" in benefit.columns:
-            st.plotly_chart(ai_benefit_histogram(benefit), use_container_width=True, config={"displayModeBar": False}, key="plot_reliance_benefit")
+            plotly_chart_safe(ai_benefit_histogram(benefit), key="plot_reliance_benefit")
             small_note("Participant subgroups are descriptive because they are defined using the AI-benefit outcome itself.")
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -951,7 +960,24 @@ elif page == "Case Explorer":
         warning("No case-level summary could be generated.")
         st.stop()
 
-    st.plotly_chart(case_scatter(cases_current), use_container_width=True, config={"displayModeBar": False}, key="plot_case_scatter")
+    plotly_chart_safe(case_scatter(cases_current), key="plot_case_scatter")
+
+
+    section_kicker("Where AI helped — case-by-case")
+    heatmap_mode = st.segmented_control(
+        "Show benefit as",
+        ["Cost benefit", "Accuracy benefit", "Approval change"],
+        default="Cost benefit",
+        key="case_heatmap_mode",
+    )
+    plotly_chart_safe(
+        case_protocol_delta_heatmap_vertical(cases_current.merge(view, on="case_id", how="right") if False else view, mode=heatmap_mode or "Cost benefit"),
+        key="plot_case_delta_heatmap_vertical",
+        height=720,
+    )
+    small_note(
+        "Green = AI-supported protocol outperformed no-AI for that case. Red = no-AI was better. White = no difference."
+    )
 
     labels = []
     for _, r in cases_current.iterrows():
@@ -976,7 +1002,7 @@ elif page == "Case Explorer":
     col1, col2 = st.columns([1.1, 1])
     with col1:
         selected_metric = st.selectbox("Case metric", ["trial_cost", "correct", "decision_final", "prob_dist"], format_func={"trial_cost": "Cost", "correct": "Accuracy", "decision_final": "Approval rate", "prob_dist": "AI distance"}.get)
-        st.plotly_chart(case_outcomes_plot(view, selected_case, metric=selected_metric), use_container_width=True, config={"displayModeBar": False}, key="plot_case_outcomes")
+        plotly_chart_safe(case_outcomes_plot(view, selected_case, metric=selected_metric), key="plot_case_outcomes")
     with col2:
         case_rows = view[view["case_id"].astype(str) == str(selected_case)]
         proto_tab = case_rows.groupby("protocol").agg(
