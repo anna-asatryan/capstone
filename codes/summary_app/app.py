@@ -1,16 +1,22 @@
 from __future__ import annotations
 
 import os
+import base64
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
+
+APP_DIR = Path(__file__).parent
+HAI_IMAGE = APP_DIR / "assets" / "hai1.png"
 
 from charts import (
     ai_benefit_histogram,
     bar_by_protocol,
     case_outcomes_plot,
+    case_protocol_delta_heatmap,
     case_scatter,
     difficulty_protocol_plot,
     paired_participant_plot,
@@ -66,10 +72,150 @@ def get_demo_url() -> str | None:
 
 def get_landing_note() -> str:
     return (
-        "Interactive companion to the poster: inspect protocol effects, human-first decision revisions, "
-        "reliance behavior, and case-level outcomes without exposing raw participant identities."
+        "Interactive poster companion for a behavioral experiment on when AI advice should appear "
+        "during cost-sensitive loan decision-making."
     )
 
+
+NAV_ITEMS = [
+    "Overview",
+    "Protocol Comparator",
+    "Human-First Revision",
+    "Reliance Explorer",
+    "Case Explorer",
+]
+
+
+def with_demo_flag(url: str) -> str:
+    """Ensure the experiment link opens in safe demo mode."""
+    if "?" in url:
+        return url if "demo=true" in url else f"{url}&demo=true"
+    return f"{url}?demo=true"
+
+
+def render_overview_css() -> None:
+    st.markdown(
+        """
+        <style>
+        .overview-demo-card {
+            border: 1px solid rgba(49, 51, 63, 0.16);
+            border-radius: 16px;
+            padding: 1.05rem 1.15rem;
+            background: linear-gradient(135deg, rgba(20, 184, 166, 0.10), rgba(99, 102, 241, 0.08));
+            margin: 0.4rem 0 1.05rem 0;
+        }
+        .overview-demo-title {
+            font-size: 1.05rem;
+            font-weight: 750;
+            margin-bottom: 0.35rem;
+        }
+        .overview-demo-text {
+            font-size: 0.94rem;
+            line-height: 1.45;
+            margin-bottom: 0.55rem;
+        }
+        .overview-muted {
+            color: rgba(49, 51, 63, 0.68);
+            font-size: 0.82rem;
+        }
+
+        .workflow-hero {
+            margin: 0.85rem 0 1.15rem 0;
+            padding: 1.05rem;
+            border: 1px solid rgba(15, 23, 42, 0.13);
+            border-radius: 18px;
+            box-shadow: 0 14px 35px rgba(15, 23, 42, 0.07);
+            overflow: hidden;
+            background-color: #f8fafc;
+        }
+        .workflow-kicker {
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            color: #0f766e;
+            margin-bottom: 0.8rem;
+        }
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.85rem;
+        }
+        .workflow-card {
+            min-height: 148px;
+            padding: 1.05rem;
+            border-radius: 14px;
+            border: 1px solid rgba(15, 23, 42, 0.13);
+            background: rgba(255, 255, 255, 0.80);
+            backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .workflow-title {
+            font-size: 1.08rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 0.55rem;
+        }
+        .workflow-main {
+            font-size: 0.92rem;
+            color: #111827;
+            line-height: 1.45;
+            margin-bottom: 0.75rem;
+        }
+        .workflow-note {
+            font-size: 0.78rem;
+            color: #64748b;
+            line-height: 1.4;
+        }
+        .concept-note {
+            margin: -0.15rem 0 1.15rem 0;
+            padding: 0.78rem 0.95rem;
+            border-left: 4px solid #0f766e;
+            background: rgba(15, 118, 110, 0.06);
+            border-radius: 0.55rem;
+            font-size: 0.98rem;
+            line-height: 1.45;
+        }
+        @media (max-width: 900px) {
+            .workflow-grid {
+                grid-template-columns: 1fr;
+            }
+            .workflow-card {
+                min-height: unset;
+            }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_demo_callout() -> None:
+    """Place the platform demo where scanners will actually see it: the Overview."""
+    demo_url = get_demo_url()
+    left, right = st.columns([2.4, 1])
+    with left:
+        with st.container(border=True):
+            st.markdown("#### Experience the decision task")
+            st.write(
+                "Try the same loan-review interface used in the experiment. "
+                "The safe preview shows the three workflows without writing responses "
+                "to the production study database."
+            )
+            st.caption("Independent Review · AI-Assisted Review · Sequential Review")
+    with right:
+        st.write("")
+        st.write("")
+        if demo_url:
+            st.link_button(
+                "Launch 3-minute demo",
+                with_demo_flag(demo_url),
+                type="primary",
+                use_container_width=True,
+            )
+        else:
+            warning("Demo link not configured yet.")
 
 app_data = load_data()
 trials = app_data.trials
@@ -80,20 +226,17 @@ with st.sidebar:
     st.markdown("### Human-AI Decision Explorer")
     st.caption("Poster companion app")
     st.caption("Lower cost and Brier score are better. Higher accuracy is better.")
+    st.divider()
+    st.markdown("### Filters")
+    sample_mode = st.selectbox("Sample", ["All completers", "Exclude group_3 carryover check"], index=0)
+    if "difficulty_tier" in trials.columns and not trials.empty:
+        selected_tiers = st.multiselect("Difficulty", ["easy", "medium", "hard"], default=["easy", "medium", "hard"])
+    else:
+        selected_tiers = []
 
-if "page_nav" not in st.session_state:
+if "page_nav" not in st.session_state or st.session_state.page_nav not in NAV_ITEMS:
     st.session_state.page_nav = "Overview"
 page = st.session_state.page_nav
-
-with st.expander("Filters", expanded=False):
-    f_col1, f_col2 = st.columns(2)
-    with f_col1:
-        sample_mode = st.selectbox("Sample", ["All completers", "Exclude group_3 carryover check"], index=0)
-    with f_col2:
-        if "difficulty_tier" in trials.columns and not trials.empty:
-            selected_tiers = st.multiselect("Difficulty", ["easy", "medium", "hard"], default=["easy", "medium", "hard"])
-        else:
-            selected_tiers = []
 
 if app_data.warnings:
     for w in app_data.warnings:
@@ -150,72 +293,352 @@ elif page == "Case Explorer":
         "Move from aggregate effects to individual loan cases. Inspect whether protocol effects are broad or driven by particular stimuli.",
         pills=[f"{view['case_id'].nunique()} cases in current filter", "τ = 1/6 cost-sensitive threshold"],
     )
-elif page == "Platform Demo":
-    hero(
-        "Platform Demo / Preview",
-        "The behavioral platform is the instrument used to collect decisions. For poster viewers, link only to a safe demo that does not write to the real study database.",
-        pills=["Demo mode", "No real participant rows", "3 sample trials only"],
-    )
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Render Navigation
 # ─────────────────────────────────────────────────────────────────────────────
 try:
-    nav_sel = st.pills("Navigate", ["Overview", "Protocol Comparator", "Human-First Revision", "Reliance Explorer", "Case Explorer", "Platform Demo"], default=page, key="nav_widget", label_visibility="collapsed")
+    nav_sel = st.pills("Navigate", NAV_ITEMS, default=page, key="nav_widget", label_visibility="collapsed")
 except AttributeError:
-    nav_sel = st.radio("Navigate", ["Overview", "Protocol Comparator", "Human-First Revision", "Reliance Explorer", "Case Explorer", "Platform Demo"], index=["Overview", "Protocol Comparator", "Human-First Revision", "Reliance Explorer", "Case Explorer", "Platform Demo"].index(page), horizontal=True, key="nav_widget", label_visibility="collapsed")
+    nav_sel = st.radio("Navigate", NAV_ITEMS, index=NAV_ITEMS.index(page), horizontal=True, key="nav_widget", label_visibility="collapsed")
 
 if nav_sel and nav_sel != page:
     st.session_state.page_nav = nav_sel
     st.rerun()
 
+def image_to_base64(path: Path) -> str:
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
+
+
+def render_protocol_workflow_background() -> None:
+    """Render equal-height workflow cards inside a single tile with the image as a bottom visual band."""
+    if HAI_IMAGE.exists():
+        bg64 = image_to_base64(HAI_IMAGE)
+        image_markup = f"<img class='workflow-bottom-image' src='data:image/png;base64,{bg64}' alt='Human and AI hands nearly touching' />"
+    else:
+        image_markup = ""
+
+bg64 = image_to_base64(HAI_IMAGE) if HAI_IMAGE.exists() else ""
+
+components.html(
+    f'''
+    <div class="workflow-wrap">
+        <div class="workflow-hero">
+            <div class="workflow-content">
+                <div class="workflow-topline">STUDY WORKFLOWS</div>
+
+                <div class="workflow-headline">Decision support, not decision replacement.</div>
+
+                <div class="workflow-subtitle">
+                    AI-supported decisions improved performance, but better outcomes still depend on active human judgment.
+                    These workflows test whether the timing of AI advice changes decision quality and reliance.
+                </div>
+
+                <div class="workflow-grid">
+                    <div class="workflow-card">
+                        <div>
+                            <div class="workflow-label">01</div>
+                            <div class="workflow-title">Independent Review</div>
+                            <div class="workflow-main">Human decides without AI support.</div>
+                        </div>
+                        <div class="workflow-note">Baseline condition for unaided decision quality.</div>
+                    </div>
+
+                    <div class="workflow-card">
+                        <div>
+                            <div class="workflow-label">02</div>
+                            <div class="workflow-title">AI-Assisted Review</div>
+                            <div class="workflow-main">AI default probability is shown before the judgment.</div>
+                        </div>
+                        <div class="workflow-note">Tests early advice exposure and possible anchoring.</div>
+                    </div>
+
+                    <div class="workflow-card">
+                        <div>
+                            <div class="workflow-label">03</div>
+                            <div class="workflow-title">Sequential Review</div>
+                            <div class="workflow-main">Human judges first, sees AI, then finalizes.</div>
+                        </div>
+                        <div class="workflow-note">Tests whether deliberation before advice improves revision quality.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="workflow-art">
+                <img
+                    src="data:image/png;base64,{bg64}"
+                    alt="Human and AI"
+                    class="workflow-art-img"
+                />
+                <div class="workflow-art-fade"></div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        html, body {{
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: #0f172a;
+        }}
+
+        .workflow-wrap {{
+            box-sizing: border-box;
+            width: 100%;
+            padding: 0;
+        }}
+
+        .workflow-hero {{
+            box-sizing: border-box;
+            width: 100%;
+            border: 1px solid rgba(15, 23, 42, 0.14);
+            border-radius: 18px;
+            box-shadow: 0 14px 35px rgba(15, 23, 42, 0.07);
+            overflow: hidden;
+            background: linear-gradient(180deg, #f8fbfb 0%, #eef5f4 100%);
+        }}
+
+        .workflow-content {{
+            padding: 22px 22px 0 22px;
+            position: relative;
+            z-index: 2;
+        }}
+
+        .workflow-topline {{
+            font-size: 11px;
+            line-height: 1;
+            font-weight: 800;
+            letter-spacing: 0.13em;
+            color: #0f766e;
+            margin-bottom: 10px;
+        }}
+
+        .workflow-headline {{
+            max-width: 720px;
+            font-size: 22px;
+            line-height: 1.15;
+            font-weight: 850;
+            margin-bottom: 8px;
+        }}
+
+        .workflow-subtitle {{
+            max-width: 820px;
+            font-size: 14px;
+            line-height: 1.45;
+            color: #334155;
+            margin-bottom: 18px;
+        }}
+
+        .workflow-grid {{
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            align-items: stretch;
+        }}
+
+        .workflow-card {{
+            box-sizing: border-box;
+            min-height: 145px;
+            height: 100%;
+            padding: 16px;
+            border-radius: 15px;
+            border: 1px solid rgba(15, 23, 42, 0.13);
+            background: rgba(255, 255, 255, 0.92);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }}
+
+        .workflow-label {{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 22px;
+            min-width: 30px;
+            padding: 0 8px;
+            border-radius: 999px;
+            background: rgba(15, 118, 110, 0.10);
+            color: #0f766e;
+            font-size: 11px;
+            font-weight: 800;
+            margin-bottom: 9px;
+        }}
+
+        .workflow-title {{
+            font-size: 18px;
+            line-height: 1.15;
+            font-weight: 850;
+            margin-bottom: 8px;
+        }}
+
+        .workflow-main {{
+            font-size: 14px;
+            line-height: 1.4;
+            color: #111827;
+        }}
+
+        .workflow-note {{
+            margin-top: 14px;
+            font-size: 12px;
+            line-height: 1.35;
+            color: #64748b;
+        }}
+
+        .workflow-art {{
+            position: relative;
+            width: calc(100% + 44px);
+            height: 150px;
+            margin: 10px -22px 0 -22px;
+            overflow: hidden;
+            background: #eef5f4;
+        }}
+
+        .workflow-art-img {{
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+            object-position: center 45%;
+            opacity: 0.88;
+            transform: scale(1.04);
+        }}
+
+        .workflow-art-fade {{
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(
+                    to bottom,
+                rgba(238, 245, 244, 1.00) 0%,
+                rgba(238, 245, 244, 0.78) 18%,
+                rgba(238, 245, 244, 0.30) 43%,
+                rgba(238, 245, 244, 0.06) 74%,
+                rgba(238, 245, 244, 0.00) 100%
+            ),
+            linear-gradient(
+                to right,
+                rgba(238, 245, 244, 0.90) 0%,
+                rgba(238, 245, 244, 0.10) 13%,
+                rgba(238, 245, 244, 0.00) 28%,
+                rgba(238, 245, 244, 0.00) 72%,
+            rgba(238, 245, 244, 0.10) 87%,
+            rgba(238, 245, 244, 0.90) 100%
+        );
+    pointer-events: none;
+    }}
+
+        @media (max-width: 760px) {{
+            .workflow-content {{
+                padding: 16px 16px 0 16px;
+            }}
+
+            .workflow-grid {{
+                grid-template-columns: 1fr;
+            }}
+
+            .workflow-card {{
+                min-height: 118px;
+            }}
+
+            .workflow-art {{
+                height: 100px;
+            }}
+        }}
+    </style>
+    ''',
+    height=450,
+    scrolling=False,
+)
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Overview
 # ─────────────────────────────────────────────────────────────────────────────
 if page == "Overview":
+    render_overview_css()
 
     no_ai_cost = summary.loc[summary["protocol"] == "no_ai", "Mean cost"].squeeze() if "no_ai" in set(summary["protocol"]) else np.nan
     hf_cost = summary.loc[summary["protocol"] == "human_first", "Mean cost"].squeeze() if "human_first" in set(summary["protocol"]) else np.nan
     no_ai_acc = summary.loc[summary["protocol"] == "no_ai", "Accuracy"].squeeze() if "no_ai" in set(summary["protocol"]) else np.nan
     hf_acc = summary.loc[summary["protocol"] == "human_first", "Accuracy"].squeeze() if "human_first" in set(summary["protocol"]) else np.nan
+    adjusted_pct = 1.0 - woa.get("zero_pct", np.nan) if woa.get("n", 0) and pd.notna(woa.get("zero_pct", np.nan)) else np.nan
+
+    render_demo_callout()
+
+    render_protocol_workflow_background()
+
+
 
     metric_cards(
         [
-            {"label": "Cost reduction", "value": f"no_ai {fmt_num(no_ai_cost)} → human_first {fmt_num(hf_cost)}", "note": "Mean trial cost"},
-            {"label": "Accuracy", "value": f"no_ai {fmt_num(no_ai_acc)} → human_first {fmt_num(hf_acc)}", "note": "Mean accuracy"},
-            {"label": "Human-first switch", "value": f"{switch.get('improved', 0)} improved vs {switch.get('worsened', 0)} worsened", "note": "Initial to final decision"},
-            {"label": "WOA", "value": f"{fmt_pct(woa.get('zero_pct', np.nan))} no adjustment", "note": "Weight of advice"},
+            {"label": "Decision cost", "value": f"no_ai {fmt_num(no_ai_cost)} → human_first {fmt_num(hf_cost)}", "note": "Mean trial cost; lower is better."},
+            {"label": "Accuracy", "value": f"no_ai {fmt_num(no_ai_acc)} → human_first {fmt_num(hf_acc)}", "note": "Mean correctness across scored trials."},
+            {"label": "Sequential corrections", "value": f"{switch.get('improved', 0)} improved vs {switch.get('worsened', 0)} worsened", "note": "Initial to final decision in human-first trials."},
+            {"label": "Probability adjustment", "value": fmt_pct(adjusted_pct), "note": "Human-first trials with nonzero probability movement."},
         ]
     )
 
     finding(
-        "AI-supported decisions reduced cost and improved accuracy relative to no-AI; the direct AI-first vs human-first timing contrast was directional but not decisive."
+        "AI-supported decisions reduced cost and improved accuracy relative to no-AI; "
+        "human-first showed the strongest numerical pattern, but the timing contrast against AI-first was not statistically decisive."
     )
 
-    col1, col2 = st.columns([1.15, 1])
+    col1, col2 = st.columns([1.1, 1])
     with col1:
-        st.plotly_chart(bar_by_protocol(summary, "Mean cost", "Decision cost by protocol", lower_is_better=True), use_container_width=True, config={"displayModeBar": False}, key="plot_overview_cost")
-    with col2:
-        st.plotly_chart(bar_by_protocol(summary, "Accuracy", "Accuracy by protocol", lower_is_better=False), use_container_width=True, config={"displayModeBar": False}, key="plot_overview_accuracy")
-
-    col3, col4 = st.columns([1, 1])
-    with col3:
-        st.plotly_chart(switch_sankey(switch), use_container_width=True, config={"displayModeBar": False}, key="plot_overview_sankey")
-    with col4:
-        if woa.get("n", 0):
-            metric_cards(
-                [
-                    {"label": "WOA trials", "value": f"{woa['n']}", "note": "Human-first trials where AI moved the information set."},
-                    {"label": "No adjustment", "value": fmt_pct(woa["zero_pct"]), "note": "Exact WOA = 0."},
-                    {"label": "Adjusters", "value": f"{woa['adjuster_n']}", "note": f"Median WOA among adjusters: {woa['adjuster_median']:.3f}."},
-                    {"label": "AI threshold", "value": f"τ={TAU:.3f}", "note": "Cost-sensitive approve/reject cutoff."},
-                ]
+        overview_metric = st.segmented_control(
+            "Show",
+            ["Decision cost", "Accuracy"],
+            default="Decision cost",
+            key="overview_bar_metric",
+        )
+        if overview_metric == "Accuracy":
+            st.plotly_chart(
+                bar_by_protocol(summary, "Accuracy", "Accuracy by protocol", lower_is_better=False),
+                use_container_width=True,
+                config={"displayModeBar": False},
+                key="plot_overview_accuracy",
             )
-        st.plotly_chart(difficulty_protocol_plot(view, "correct"), use_container_width=True, config={"displayModeBar": False}, key="plot_overview_diff")
+            small_note("What to notice: both AI-supported protocols should be read against the no-AI baseline; higher accuracy is better.")
+        else:
+            st.plotly_chart(
+                bar_by_protocol(summary, "Mean cost", "Decision cost by protocol", lower_is_better=True),
+                use_container_width=True,
+                config={"displayModeBar": False},
+                key="plot_overview_cost",
+            )
+            small_note("What to notice: both AI-supported protocols should be read against the no-AI baseline; lower cost is better.")
+    with col2:
+        st.plotly_chart(
+            switch_sankey(switch),
+            use_container_width=True,
+            config={"displayModeBar": False},
+            key="plot_overview_sankey",
+        )
+        small_note("What to notice: sequential review directly shows whether AI exposure corrected or worsened initial judgments.")
+
+    # ── Case × Protocol delta heatmap ─────────────────────────────────────────
+    section_kicker("Where AI helped — case-by-case")
+    heatmap_mode = st.segmented_control(
+        "Show benefit as",
+        ["Cost benefit", "Accuracy benefit", "Approval change"],
+        default="Cost benefit",
+        key="overview_heatmap_mode",
+    )
+    st.plotly_chart(
+        case_protocol_delta_heatmap(view, mode=heatmap_mode or "Cost benefit"),
+        use_container_width=True,
+        config={"displayModeBar": False},
+        key="plot_overview_delta_heatmap",
+    )
+    small_note(
+        "Green = AI-supported protocol outperformed no-AI for that case. "
+        "Red = no-AI was better. White = no difference. "
+        "Switch the toggle above to inspect cost, accuracy, or approval-rate change."
+    )
 
     small_note(
-        "This app intentionally emphasizes interactive detail rather than repeating the poster. "
-        "Use the sidebar to inspect carryover sensitivity and difficulty-specific results."
+        "Use the sidebar filters for carryover sensitivity checks and difficulty-specific results. Use the top navigation for deeper protocol, reliance, and case-level analysis."
     )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -413,32 +836,3 @@ elif page == "Case Explorer":
             if useful_cols:
                 with st.expander("View Case Metadata Table"):
                     st.dataframe(pd.DataFrame({"Field": useful_cols, "Value": [meta[c] for c in useful_cols]}), use_container_width=True, hide_index=True)
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Platform Demo
-# ─────────────────────────────────────────────────────────────────────────────
-elif page == "Platform Demo":
-    demo_url = get_demo_url()
-    if demo_url:
-        if "?" in demo_url:
-            if "demo=true" not in demo_url:
-                demo_url += "&demo=true"
-        else:
-            demo_url += "?demo=true"
-            
-        st.markdown(
-            "This link opens a **3-minute safe preview** of the decision platform. "
-            "It skips onboarding and data collection so you can safely try the three protocol conditions "
-            "(Independent Review, AI-Assisted Review, and Sequential Review) without contaminating the production database."
-        )
-        st.link_button("Try the 3-minute demo", demo_url, type="primary", use_container_width=False)
-        finding("Poster viewers scanning the QR code should be directed to this demo URL, rather than the real experiment link.")
-    else:
-        warning("Demo link not configured yet.")
-
-    st.subheader("Why this companion app exists")
-    st.markdown(
-        """
-        The poster gives the compressed research story. This app gives judges a way to inspect evidence behind the story: protocol comparisons, human-first revisions, reliance distributions, and individual loan cases.
-        """
-    )

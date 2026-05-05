@@ -264,3 +264,161 @@ def case_scatter(cases: pd.DataFrame, height: int = 340) -> go.Figure:
     fig.update_xaxes(title="AI predicted default probability")
     fig.update_yaxes(title="Mean human decision cost")
     return fig
+
+
+def case_protocol_delta_heatmap(df: pd.DataFrame, mode: str = "Cost benefit", height: int = 410) -> go.Figure:
+    """Case x protocol matrix showing where AI-supported protocols improved over no-AI.
+
+    Positive values are always better:
+    - Cost benefit = no-AI mean cost minus protocol mean cost.
+    - Accuracy benefit = protocol accuracy minus no-AI accuracy.
+    - Approval change = protocol approval rate minus no-AI approval rate.
+    """
+    if df.empty or "case_id" not in df.columns or "protocol" not in df.columns:
+        return go.Figure()
+
+    metric_map = {
+        "Cost benefit": {
+            "col": "trial_cost",
+            "label": "Cost benefit vs No-AI",
+            "hover_label": "cost benefit",
+            "value_fmt": ".3f",
+            "benefit_fn": lambda proto, base: base - proto,
+        },
+        "Accuracy benefit": {
+            "col": "correct",
+            "label": "Accuracy benefit vs No-AI",
+            "hover_label": "accuracy benefit",
+            "value_fmt": ".1%",
+            "benefit_fn": lambda proto, base: proto - base,
+        },
+        "Approval change": {
+            "col": "decision_final",
+            "label": "Approval-rate change vs No-AI",
+            "hover_label": "approval-rate change",
+            "value_fmt": ".1%",
+            "benefit_fn": lambda proto, base: proto - base,
+        },
+    }
+    spec = metric_map.get(mode, metric_map["Cost benefit"])
+    value_col = spec["col"]
+    if value_col not in df.columns:
+        return go.Figure()
+
+    meta_cols = [c for c in ["case_id", "case_position", "difficulty_tier", "pred_prob", "y_true"] if c in df.columns]
+    meta = df[meta_cols].drop_duplicates(subset=["case_id"]).copy()
+    if "case_position" not in meta.columns:
+        meta["case_position"] = range(1, len(meta) + 1)
+    meta = meta.sort_values(["case_position", "case_id"], na_position="last")
+    case_ids = meta["case_id"].tolist()
+    x_labels = [f"C{int(pos)}" if pd.notna(pos) else f"C{i+1}" for i, pos in enumerate(meta["case_position"])]
+
+    means = df.groupby(["case_id", "protocol"], observed=True)[value_col].mean().unstack("protocol")
+    rows = [p for p in ["ai_first", "human_first"] if p in means.columns]
+    if "no_ai" not in means.columns or not rows:
+        return go.Figure()
+
+    z = []
+    custom = []
+    text = []
+    for proto in rows:
+        z_row, c_row, t_row = [], [], []
+        for _, m in meta.iterrows():
+            cid = m["case_id"]
+            base = means.loc[cid, "no_ai"] if cid in means.index and "no_ai" in means.columns else np.nan
+            proto_val = means.loc[cid, proto] if cid in means.index and proto in means.columns else np.nan
+            val = spec["benefit_fn"](proto_val, base) if pd.notna(proto_val) and pd.notna(base) else np.nan
+            z_row.append(val)
+            if mode == "Cost benefit":
+                t_row.append("" if pd.isna(val) else f"{val:+.2f}")
+            else:
+                t_row.append("" if pd.isna(val) else f"{val:+.0%}")
+            c_row.append([
+                cid,
+                int(m["case_position"]) if pd.notna(m.get("case_position", np.nan)) else None,
+                m.get("difficulty_tier", "—"),
+                m.get("pred_prob", np.nan),
+                "Default" if m.get("y_true", np.nan) == 1 else "Paid" if m.get("y_true", np.nan) == 0 else "—",
+                base,
+                proto_val,
+                val,
+            ])
+        z.append(z_row)
+        custom.append(c_row)
+        text.append(t_row)
+
+    arr = np.asarray(z, dtype=float)
+    finite = arr[np.isfinite(arr)]
+    vmax = float(np.nanmax(np.abs(finite))) if finite.size else 1.0
+    if vmax == 0 or not np.isfinite(vmax):
+        vmax = 1.0
+
+    fig = go.Figure(
+        go.Heatmap(
+            z=z,
+            x=x_labels,
+            y=[PROTOCOL_LABELS.get(p, p) for p in rows],
+            customdata=custom,
+            text=text,
+            texttemplate="%{text}",
+            textfont={"size": 11},
+            zmin=-vmax,
+            zmax=vmax,
+            colorscale=[[0, "#dc2626"], [0.5, "#f8fafc"], [1, "#059669"]],
+            colorbar=dict(title="Benefit", thickness=12, len=0.72),
+            hovertemplate=(
+                "<b>Case %{customdata[1]}</b> · %{customdata[2]}<br>"
+                "Outcome: %{customdata[4]}<br>"
+                "AI risk: %{customdata[3]:.3f}<br>"
+                "No-AI value: %{customdata[5]:.3f}<br>"
+                "Protocol value: %{customdata[6]:.3f}<br>"
+                f"{spec['hover_label']}: " + "%{customdata[7]:.3f}<extra></extra>"
+            ),
+        )
+    )
+    fig = tufte_layout(fig, height=height, title=f"Where AI helped across the 18 cases — {spec['label']}")
+    fig.update_xaxes(title="Loan case", side="bottom", tickangle=0)
+    fig.update_yaxes(title="AI-supported protocol")
+    fig.add_annotation(
+        xref="paper", yref="paper", x=0, y=1.12, showarrow=False, align="left",
+        text="Positive cells mean improvement relative to the no-AI baseline for the same case.",
+        font=dict(size=12, color="#64748b"),
+    )
+    return fig
+
+
+def risk_threshold_strip(cases: pd.DataFrame, height: int = 190) -> go.Figure:
+    """Compact case map: 18 loan cases against the cost-sensitive AI threshold."""
+    if cases.empty or "pred_prob" not in cases.columns:
+        return go.Figure()
+    d = cases.copy()
+    if "case_position" not in d.columns:
+        d["case_position"] = range(1, len(d) + 1)
+    d = d.sort_values(["pred_prob", "case_position"], na_position="last")
+    d["Outcome"] = np.where(d.get("y_true", np.nan) == 1, "Default", "Paid")
+    d["Case"] = d["case_position"].map(lambda x: f"Case {int(x)}" if pd.notna(x) else "Case")
+    fig = px.scatter(
+        d,
+        x="pred_prob",
+        y=["Cases"] * len(d),
+        color="difficulty_tier" if "difficulty_tier" in d.columns else None,
+        symbol="Outcome" if "Outcome" in d.columns else None,
+        hover_data={
+            "case_id": True,
+            "case_position": True,
+            "pred_prob": ":.3f",
+            "y_true": True if "y_true" in d.columns else False,
+            "mean_cost": ":.3f" if "mean_cost" in d.columns else False,
+            "accuracy": ":.3f" if "accuracy" in d.columns else False,
+        },
+        category_orders={"difficulty_tier": TIERS},
+        color_discrete_map={"easy": "#059669", "medium": "#ea580c", "hard": "#dc2626"},
+    )
+    fig.update_traces(marker=dict(size=13, line=dict(color="white", width=1.4)), hovertemplate=None)
+    fig.add_vline(x=1/6, line_dash="dash", line_color="#111827", annotation_text="τ = 1/6", annotation_position="top")
+    fig = tufte_layout(fig, height=height, title="Case risk map: AI probability vs decision threshold")
+    fig.update_xaxes(title="AI-predicted default probability", range=[0, max(0.75, float(d["pred_prob"].max()) + 0.04)])
+    fig.update_yaxes(title="", showticklabels=False)
+    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1))
+    return fig
+
