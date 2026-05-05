@@ -91,36 +91,87 @@ def fmt_num(x: float, digits: int = 3) -> str:
     return "—" if pd.isna(x) else f"{x:.{digits}f}"
 
 
-def plotly_chart_safe(fig, use_container_width: bool = True, config: dict | None = None, key: str | None = None):
-    """Render Plotly charts with phone-safe interaction defaults.
-
-    This avoids accidental drag/zoom/pan behavior on mobile while keeping hover/tap available.
+def plotly_chart_safe(fig, *, use_container_width=True, config=None, key=None):
     """
-    if fig is None:
-        return
-    try:
-        fig.update_layout(dragmode=False)
-        fig.update_xaxes(fixedrange=True)
-        fig.update_yaxes(fixedrange=True)
-    except Exception:
-        pass
+    Render Plotly charts in a phone-safe way:
+    - disables accidental zoom/pan interactions
+    - moves legends below the title/plot area
+    - adds enough margins so titles, legends, and axes do not overlap
+    """
 
     safe_config = {
         "displayModeBar": False,
         "scrollZoom": False,
         "doubleClick": False,
+        "staticPlot": False,
         "responsive": True,
     }
     if config:
         safe_config.update(config)
-        safe_config["scrollZoom"] = False
-        safe_config["doubleClick"] = False
-        safe_config["displayModeBar"] = False
+
+    # Force safer interaction on mobile.
+    fig.update_layout(
+        dragmode=False,
+        hovermode="closest",
+        margin=dict(l=58, r=24, t=95, b=70),
+    )
+
+    # Make titles less likely to collide with legends.
+    fig.update_layout(
+        title=dict(
+            x=0.0,
+            xanchor="left",
+            y=0.98,
+            yanchor="top",
+            font=dict(size=18),
+        )
+    )
+
+    # Put legend under the title but above the plot, horizontally.
+    # This prevents right-side legends from crushing the chart on phones.
+    fig.update_layout(
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0.0,
+            font=dict(size=11),
+            bgcolor="rgba(255,255,255,0.72)",
+            borderwidth=0,
+        )
+    )
+
+    # Prevent axes labels from becoming huge/overlapping on phone.
+    fig.update_xaxes(
+        automargin=True,
+        fixedrange=True,
+        tickfont=dict(size=11),
+        title_font=dict(size=13),
+    )
+    fig.update_yaxes(
+        automargin=True,
+        fixedrange=True,
+        tickfont=dict(size=11),
+        title_font=dict(size=13),
+    )
 
     st.plotly_chart(
         fig,
         use_container_width=use_container_width,
         config=safe_config,
+        key=key,
+    )
+
+def plotly_chart_safe_no_legend(fig, *, use_container_width=True, config=None, key=None):
+    """
+    Use this for charts where the legend is too crowded on phones.
+    """
+    fig.update_layout(showlegend=False)
+    plotly_chart_safe(
+        fig,
+        use_container_width=use_container_width,
+        config=config,
         key=key,
     )
 
