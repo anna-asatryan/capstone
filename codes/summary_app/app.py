@@ -117,7 +117,7 @@ def plotly_chart_safe(fig, use_container_width: bool = True, config: dict | None
         safe_config["doubleClick"] = False
         safe_config["displayModeBar"] = False
 
-    plotly_chart_safe(
+    st.plotly_chart(
         fig,
         use_container_width=use_container_width,
         config=safe_config,
@@ -857,7 +857,9 @@ if page == "Overview":
         "human-first showed the strongest numerical pattern, but the timing contrast against AI-first was not statistically decisive."
     )
 
-    render_evidence_toc()
+    small_note(
+        "Use the top navigation to open the detailed analysis tabs: Protocol Comparator, Human-First Revision, Reliance Explorer, and Case Explorer."
+    )
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Protocol Comparator
