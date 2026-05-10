@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(python3 -c ' *)",
-      "Bash(python3 -m jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=300 codes/notebooks/analysis.ipynb --output /tmp/analysis_executed.ipynb)"
-    ]
-  }
-}
