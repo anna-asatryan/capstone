@@ -1,0 +1,81 @@
+{
+  "analysis_dir": "artifacts/analysis/latest",
+  "exact_case_match_to_official_frozen": true,
+  "git_commit": "9fcf633ba08f5ba494a0412e025df1446bb55527",
+  "mode": "paper",
+  "model_metrics": {
+    "approval_rate_at_0_5": 0.921721,
+    "approval_rate_at_tau": 0.44081,
+    "auc": 0.691397,
+    "brier": 0.16387,
+    "default_rate": 0.228785,
+    "ece": 0.032847,
+    "log_loss": 0.505369,
+    "mean_pred_prob": 0.215127
+  },
+  "official_frozen_dir": "artifacts/frozen",
+  "overview": {
+    "blocks": 3,
+    "candidate_pool_rows": 479744,
+    "difficulty_tiers": [
+      "easy",
+      "hard",
+      "medium"
+    ],
+    "final_cases": 18,
+    "practice_cases": 2
+  },
+  "participant_exports": {
+    "completed_participants": 3,
+    "trial_rows": 86
+  },
+  "selection_manifest": {
+    "N_PER_CELL": 3,
+    "cost_ratio": {
+      "C_FN": 5,
+      "C_FP": 1,
+      "tau": 0.166667
+    },
+    "excluded_purpose": "other",
+    "input_candidate_pool": "/Users/annaasatryan/Desktop/capstone/artifacts/build/candidate_pool_scored.parquet",
+    "n_final_cases": 18,
+    "n_practice_cases": 2,
+    "output_paths": {
+      "final_cases": "/Users/annaasatryan/Desktop/capstone/artifacts/build/final_cases.csv",
+      "practice_cases": "/Users/annaasatryan/Desktop/capstone/artifacts/build/practice_cases.csv",
+      "protocol_rotation": "/Users/annaasatryan/Desktop/capstone/artifacts/build/protocol_rotation.csv"
+    },
+    "probability_filter": {
+      "max_exclusive": 0.95,
+      "min_exclusive": 0.05
+    },
+    "sampling_cell_order": [
+      [
+        "easy",
+        1
+      ],
+      [
+        "hard",
+        1
+      ],
+      [
+        "hard",
+        0
+      ],
+      [
+        "medium",
+        1
+      ],
+      [
+        "medium",
+        0
+      ],
+      [
+        "easy",
+        0
+      ]
+    ],
+    "seed": 42
+  },
+  "warnings": []
+}

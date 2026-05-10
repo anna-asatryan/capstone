@@ -73,17 +73,6 @@ data/experiment/*
 !data/experiment/.gitkeep
 
 # =========================================================
-# Generated artifacts
-# Keep frozen artifacts if they are part of the canonical repo
-# =========================================================
-artifacts/analysis/
-artifacts/*.parquet
-artifacts/*.csv
-artifacts/*.log
-!artifacts/frozen/
-!artifacts/frozen/**
-
-# =========================================================
 # Quarto / paper rendering artifacts
 # Track source files, ignore generated files
 # =========================================================

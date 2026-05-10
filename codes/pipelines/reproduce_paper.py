@@ -1,9 +1,9 @@
 """
 Paper reproduction pipeline.
 
-Loads frozen participant exports from artifacts/frozen/experiment_exports/,
+Loads participant exports from artifacts/db_exports/,
 validates their schema, computes analysis-ready tables and figures,
-and writes all outputs to artifacts/analysis/latest/.
+and writes all outputs to artifacts/analysis/.
 
 Usage:
     python3 -m codes.pipelines.reproduce_paper
@@ -19,6 +19,7 @@ import pandas as pd
 
 from codes.pipelines.common import (
     ANALYSIS_DIR,
+    ARTIFACTS_DIR,
     FROZEN_ARTIFACTS_DIR,
     TAU,
     ensure_directory,
@@ -28,7 +29,7 @@ from codes.pipelines.common import (
 )
 from codes.pipelines.validate_artifacts import validate_frozen_artifacts
 
-EXPORTS_DIR = FROZEN_ARTIFACTS_DIR / "experiment_exports"
+EXPORTS_DIR = ARTIFACTS_DIR / "db_exports"
 
 REQUIRED_PARTICIPANT_COLS = {"id", "participant_group", "completed", "completed_at"}
 REQUIRED_TRIAL_COLS = {

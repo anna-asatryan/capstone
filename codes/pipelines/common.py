@@ -13,7 +13,7 @@ import pandas as pd
 ROOT_DIR = Path(__file__).resolve().parents[2]
 ARTIFACTS_DIR = ROOT_DIR / "artifacts"
 FROZEN_ARTIFACTS_DIR = ARTIFACTS_DIR / "frozen"
-ANALYSIS_DIR = ARTIFACTS_DIR / "analysis" / "latest"
+ANALYSIS_DIR = ARTIFACTS_DIR / "analysis"
 REBUILD_DIR = ARTIFACTS_DIR / "rebuild"
 DATA_DIR = ROOT_DIR / "data"
 

@@ -12,7 +12,7 @@ Checks beyond validate_artifacts.py:
   - config.py loads successfully
   - config.py case IDs match frozen CSV exactly
 
-If artifacts/frozen/experiment_exports/ exists, also validates:
+If artifacts/db_exports/ exists, also validates:
   - required participant and trial columns are present
   - human_first init columns present when human_first trials exist
   - completed participants have 18 scored trials each
@@ -31,7 +31,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from codes.pipelines.common import FROZEN_ARTIFACTS_DIR
+from codes.pipelines.common import ARTIFACTS_DIR, FROZEN_ARTIFACTS_DIR
 from codes.pipelines.reproduce_paper import (
     REQUIRED_PARTICIPANT_COLS,
     REQUIRED_TRIAL_COLS,
@@ -177,7 +177,7 @@ def validate_participant_exports(
     Does not raise — caller decides how to handle warnings vs errors.
     If exports_dir doesn't exist or has no CSVs, returns [] (pre-data-collection is fine).
     """
-    exp_dir = exports_dir or (FROZEN_ARTIFACTS_DIR / "experiment_exports")
+    exp_dir = exports_dir or (ARTIFACTS_DIR / "db_exports")
     participants_path = exp_dir / "participants.csv"
     trials_path = exp_dir / "trials.csv"
 

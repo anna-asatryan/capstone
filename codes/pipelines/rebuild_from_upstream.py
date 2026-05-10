@@ -10,6 +10,7 @@ from codes.data_prep import build_features, load_and_clean
 from codes.feature_config import CAT_COLS, FEATURES, NUM_COLS, TARGET
 from codes.pipelines.common import (
     ANALYSIS_DIR,
+    ARTIFACTS_DIR,
     FROZEN_ARTIFACTS_DIR,
     REBUILD_DIR,
     TAU,
@@ -425,7 +426,7 @@ def run_rebuild_from_upstream(
         manifest=manifest,
         warnings=warnings,
         output_dir=analysis_output_dir or ANALYSIS_DIR,
-        experiment_exports_dir=FROZEN_ARTIFACTS_DIR / "experiment_exports",
+        experiment_exports_dir=ARTIFACTS_DIR / "db_exports",
         exact_case_match=exact_case_match,
     )
     return analysis_output
