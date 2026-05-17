@@ -229,11 +229,7 @@ These files define the official experiment boundary. They should be treated as l
 
 The upstream raw loan dataset is larger than 1GB and is not included in the GitHub repository or lightweight submission archive.
 
-Original source:
-
-```text
-https://www.kaggle.com/datasets/adarshsng/lending-club-loan-data-csv?resource=download
-```
+Original source: https://www.kaggle.com/datasets/adarshsng/lending-club-loan-data-csv?resource=download
 
 Expected local path for optional rebuild:
 
@@ -474,11 +470,7 @@ Alternative direct launch:
 streamlit run codes/summary_app/app.py
 ```
 
-The deployed summary app is available at:
-
-```text
-https://capstone-explorer.streamlit.app
-```
+The deployed summary app is available at: https://capstone-explorer.streamlit.app
 
 The summary app is for presentation and exploration. It is not required for default reproduction.
 
