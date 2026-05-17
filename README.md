@@ -16,7 +16,7 @@ The main reproduction command is:
 python run.py
 ```
 
-This regenerates the final behavioral tables, figures, and summary from frozen experiment artifacts and exported participant data. It does **not** require the 1GB+ raw LendingClub CSV.
+This regenerates the final behavioral tables, figures, and summary from frozen experiment artifacts and exported participant data. It does **not** require the raw LendingClub CSV, the raw-data archive, or the processed modeling CSV.
 
 ---
 
@@ -55,10 +55,11 @@ capstone/
 ├── requirements.txt
 ├── run.py
 ├── data/
-│   ├── raw/                         # local-only raw data; loan.csv is not committed
-│   │   └── README.md                # raw-data source, Drive archive link, and rebuild instructions
-│   ├── processed/
-│   │   └── loan_v1.csv              # processed modeling dataset
+│   ├── README.md                    # data access guide for official and optional data paths
+│   ├── raw/                         # local-only raw data; large files are not committed
+│   │   └── .gitkeep
+│   ├── processed/                   # local-only processed modeling data
+│   │   └── .gitkeep
 │   └── experiment_exports/          # Supabase exports used by default reproduction
 │       ├── participants.csv
 │       ├── trials.csv
@@ -83,8 +84,15 @@ capstone/
 │   ├── visualizations/              # auxiliary EDA/modeling diagnostic figures
 │   ├── experiment_platform/         # participant-facing Streamlit + Supabase app
 │   └── summary_app/                 # read-only Streamlit summary app
-├── docs/                            # optional detailed architecture/reproduction notes
-└── paper/                           # final paper source and PDF
+└── paper/                           # final paper source, bibliography, figures, and PDF
+```
+
+Large local-only files are intentionally excluded from GitHub and from the lightweight submission archive:
+
+```text
+data/raw/loan.csv
+data/raw/lendingclub_raw_data.zip
+data/processed/loan_v1.csv
 ```
 
 ---
@@ -108,13 +116,23 @@ The default reproduction does **not** require:
 
 ```text
 data/raw/loan.csv
+data/raw/lendingclub_raw_data.zip
+data/processed/loan_v1.csv
 ```
 
-The optional upstream rebuild does require:
+The optional upstream rebuild requires:
 
 ```text
 data/raw/loan.csv
 ```
+
+The processed modeling file is optional and notebook-facing:
+
+```text
+data/processed/loan_v1.csv
+```
+
+It is not required by `python run.py` or `python run.py --mode validate`.
 
 This distinction is central: the official paper reproduction uses included participant exports and frozen experiment artifacts, while the optional rebuild uses the raw LendingClub dataset only for upstream provenance.
 
@@ -145,7 +163,7 @@ artifacts/figures/
 artifacts/summary.json
 ```
 
-This is the official one-command reproduction path for the final behavioral results. It does not require `data/raw/loan.csv`, Supabase credentials, manual notebook execution, or manual figure editing.
+This is the official one-command reproduction path for the final behavioral results. It does not require `data/raw/loan.csv`, `data/processed/loan_v1.csv`, Supabase credentials, manual notebook execution, or manual figure editing.
 
 ### 3.2 Validation
 
@@ -179,11 +197,7 @@ python run.py --mode summary --summary-target local
 
 The local summary mode first regenerates the paper outputs, then launches Streamlit from `codes/summary_app/app.py`. The deployed summary app is for presentation and exploration. The official reproduction path remains `python run.py`.
 
-Deployed app:
-
-```text
-https://capstone-explorer.streamlit.app
-```
+Deployed app: https://capstone-explorer.streamlit.app
 
 ### 3.5 Optional upstream rebuild
 
@@ -209,6 +223,14 @@ It is provenance-only. It is not the official paper reproduction path, and it do
 
 ## 4. Data sources and data handling
 
+Large-data access instructions are documented in:
+
+```text
+data/README.md
+```
+
+That file explains both the raw LendingClub archive and the optional processed modeling dataset, including Drive links, expected local paths, and checksums where applicable.
+
 ### 4.1 Raw LendingClub data
 
 The upstream raw loan dataset is larger than 1GB and is not included in the GitHub repository or lightweight submission archive.
@@ -230,22 +252,6 @@ Expected local path for optional rebuild:
 ```text
 data/raw/loan.csv
 ```
-
-Raw-data instructions are documented in:
-
-```text
-data/raw/README.md
-```
-
-That file includes the original Kaggle source, the exact Google Drive archive used for this project, expected local paths, and SHA-256 checksums.
-
-Exact project archive:
-
-```text
-https://drive.google.com/file/d/160q9keXvmJgXwaaoZrs4eyHDtAH4kgN0/view?usp=sharing
-```
-
-After downloading and extracting the archive, `data/raw/loan.csv` can be used for the optional upstream modeling and case-design rebuild.
 
 The official/default paper reproduction uses frozen artifacts and experiment exports, not the raw LendingClub dataset.
 
@@ -291,7 +297,20 @@ credit_history_years = issue_d - earliest_cr_line, in years
 data/processed/loan_v1.csv
 ```
 
-This file is used by the modeling and case-design notebooks. The official default reproduction does not require it, because final behavioral results use frozen experiment artifacts and exported participant data.
+This file is used by the upstream modeling and case-design notebooks. It is not committed to GitHub and should not be included in the lightweight submission archive because it is approximately 200 MB.
+
+The official default reproduction does not require it, because final behavioral results use frozen experiment artifacts and exported participant data:
+
+```text
+data/experiment_exports/
+artifacts/frozen/
+```
+
+If needed for upstream notebook inspection, the exact processed-data copy is documented in:
+
+```text
+data/README.md
+```
 
 ### 4.4 Experiment exports
 
@@ -302,7 +321,7 @@ data/experiment_exports/
 └── quiz_responses.csv
 ```
 
-These are Supabase exports collected from the deployed experiment platform. They are fixed inputs for the final behavioral analysis.
+These are Supabase exports collected from the deployed experiment platform. They are fixed inputs for the final behavioral analysis and are required by the official default reproduction.
 
 ### 4.5 Frozen experiment artifacts
 
@@ -372,6 +391,18 @@ normative_deviation_by_difficulty.png
 
 For the final paper, use the generated figure files from `artifacts/figures/`. Do not manually edit the generated figures outside the code pipeline.
 
+The paper source uses selected figures copied into:
+
+```text
+paper/figures/
+```
+
+These are copies of generated files from `artifacts/figures/` for LaTeX compilation. The generated source-of-truth figures remain in `artifacts/figures/` and are recreated by:
+
+```bash
+python run.py
+```
+
 ---
 
 ## 7. Notebooks
@@ -439,7 +470,7 @@ python run.py
 
 ```powershell
 py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
+.\\.venv\\Scripts\\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 python run.py --mode validate
@@ -450,14 +481,14 @@ If PowerShell blocks activation:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\.venv\Scripts\Activate.ps1
+.\\.venv\\Scripts\\Activate.ps1
 ```
 
 ### Windows Command Prompt
 
 ```cmd
 py -3.11 -m venv .venv
-.venv\Scripts\activate.bat
+.venv\\Scripts\\activate.bat
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 python run.py --mode validate
@@ -468,10 +499,6 @@ python run.py
 
 ## 10. Reproducibility statement
 
-The repository separates the locked behavioral reproduction path from the optional upstream raw-data rebuild. The default command regenerates the final reported behavioral results from included participant exports and frozen artifacts. The raw LendingClub file is documented but excluded because of size constraints; it is only needed for optional rebuild mode. This structure supports reproducibility while avoiding oversized raw-data commits and private credential leakage.
+The repository separates the locked behavioral reproduction path from the optional upstream raw-data rebuild. The default command regenerates the final reported behavioral results from included participant exports and frozen artifacts. The raw LendingClub file and processed modeling dataset are documented but excluded because of size constraints; they are not needed for the official paper reproduction. This structure supports reproducibility while avoiding oversized raw-data commits and private credential leakage.
 
-The project repository is available at:
-
-```text
-https://github.com/anna-asatryan/capstone
-```
+The project repository is available at: https://github.com/anna-asatryan/capstone
