@@ -24,7 +24,7 @@ data/experiment_exports/
 artifacts/frozen/
 ```
 
-It does **not** require:
+The official/default reproduction does **not** require:
 
 ```text
 data/raw/loan.csv
@@ -105,39 +105,19 @@ data/raw/loan.csv
 data/raw/LCDataDictionary.xlsx
 ```
 
-Verify the downloaded archive:
+This raw data is needed only for the optional upstream rebuild:
 
 ```bash
-shasum -a 256 data/raw/lendingclub_raw_data.zip
+python run.py --mode rebuild
 ```
 
-Expected SHA-256:
-
-```text
-110e6ed29fd01c480a60f0b3a1edb7166305b296c3295d32fa45a7ece505a6be  data/raw/lendingclub_raw_data.zip
-```
-
-After extracting, verify the individual files:
-
-```bash
-shasum -a 256 data/raw/loan.csv
-shasum -a 256 data/raw/LCDataDictionary.xlsx
-```
-
-Expected SHA-256:
-
-```text
-23783ef320e4df24ac113d6e5b830edb909912b7783d49b89aacd5690dc9120c  data/raw/loan.csv
-d39e281c1130c8abadce87250d97d363297e6c5c891fac6f721f076469e7a4bf  data/raw/LCDataDictionary.xlsx
-```
-
-Note: If the raw-data archive is regenerated, the archive hash may change because zip files can include metadata. The individual file hashes are the most important checks after extraction.
+The official/default paper reproduction uses `data/experiment_exports/` and `artifacts/frozen/` instead.
 
 ---
 
 ## 5. Processed modeling data
 
-The processed modeling dataset is not required for the official paper reproduction. It is provided only for convenience when inspecting the notebook-based EDA/modeling workflow.
+The processed modeling dataset is optional and notebook-facing only. It is not required for the official paper reproduction.
 
 Expected local path:
 
@@ -146,7 +126,6 @@ data/processed/loan_v1.csv
 ```
 
 Exact processed-data copy: https://drive.google.com/file/d/1-pObaAedLyYoYVCSmduq5RsHuEUbx1SE/view?usp=sharing 
-
 
 This file is used by the notebook workflow, especially the EDA/modeling/case-design sequence. The scripted official reproduction does not read this file.
 

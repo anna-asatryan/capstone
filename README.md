@@ -2,7 +2,7 @@
 
 Repository: https://github.com/anna-asatryan/capstone
 
-This repository contains the code, data contracts, frozen experiment artifacts, behavioral analysis outputs, Streamlit apps, and paper source for an AUA DS 299 capstone project on human-AI decision support. The study tests whether the timing of AI advice changes decision quality and reliance in a cost-sensitive loan decision task.
+This repository contains the code, frozen experiment artifacts, exported behavioral data, generated analysis outputs, Streamlit apps, and paper source for an AUA DS 299 capstone project on human-AI decision support. The study tests whether the timing of AI advice changes decision quality and reliance in a cost-sensitive loan decision task.
 
 Participants completed a within-subject experiment with three protocols:
 
@@ -10,19 +10,109 @@ Participants completed a within-subject experiment with three protocols:
 - `ai_first`: participants saw the AI default probability before making their final judgment
 - `human_first`: participants first made an unaided judgment, then saw the AI probability, then revised or kept their judgment
 
-The main reproduction command is:
+---
+
+## 1. Quick start: environment and reproduction
+
+Use **Python 3.11**. The project was tested with Python 3.11 on macOS and Windows. Python 3.13 is not recommended because some pinned scientific dependencies may not install reliably.
+
+The official one-command reproduction is:
 
 ```bash
 python run.py
 ```
 
-This regenerates the final behavioral tables, figures, and summary from frozen experiment artifacts and exported participant data. It does **not** require the raw LendingClub CSV, the raw-data archive, or the processed modeling CSV.
+This regenerates the final behavioral tables, figures, and summary from included frozen experiment artifacts and exported participant data. It does **not** require the raw LendingClub CSV, processed modeling CSV, Supabase credentials, Streamlit apps, manual notebook execution, or manual figure editing.
+
+### macOS / Linux
+
+Run from the repository root:
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+
+python run.py --mode validate
+python run.py
+```
+
+### Windows PowerShell
+
+Run from the repository root:
+
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+
+python run.py --mode validate
+python run.py
+```
+
+If PowerShell blocks activation, run this once in the same PowerShell window:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+```
+
+If `py -3.11` is not recognized, install Python 3.11 from python.org and include the Python Launcher during installation, or use the full path to the Python 3.11 executable.
+
+### Windows Command Prompt
+
+Run from the repository root:
+
+```cmd
+py -3.11 -m venv .venv
+.venv\Scripts\activate.bat
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+
+python run.py --mode validate
+python run.py
+```
+
+### Interactive menu
+
+After installing dependencies, you can also use the guided menu:
+
+```bash
+python run.py --interactive
+```
+
+The interactive menu exposes paper reproduction, summary app access, validation, and optional upstream rebuild. For automated grading/reproduction, use the non-interactive official command:
+
+```bash
+python run.py
+```
 
 ---
 
-## 1. Main results reproduced by `python run.py`
+## 2. Required software and dependencies
 
-The final behavioral analysis uses:
+Required for the official default reproduction:
+
+- Python 3.11
+- `pip`
+- Python packages listed in `requirements.txt`
+
+Optional:
+
+- TeX Live 2024+ or another LaTeX distribution, only if rebuilding the PDF from `paper/main.tex`
+- Streamlit, installed through `requirements.txt`, only if launching the summary app or participant-facing experiment platform
+- Supabase project credentials, only if running the participant-facing experiment platform with database writes
+- Raw LendingClub data, only if running the optional upstream rebuild
+
+No R environment is required.
+
+---
+
+## 3. Project objective and main reproduced results
+
+The objective is to evaluate whether AI advice timing changes realized decision quality in a cost-sensitive human-AI decision-support task. The final behavioral analysis uses:
 
 - 100 completed participants
 - 1,800 scored trials
@@ -43,48 +133,44 @@ Cost contrasts:
 
 Additional regenerated outputs include the human-first correction matrix, weight-of-advice summary, case-level cost summary, normative deviation by difficulty, and paper-ready figures.
 
+These values are regenerated in `artifacts/summary.json` and `artifacts/tables/` by `python run.py`.
+
 Interpretation boundary: AI-supported protocols reduced cost relative to no-AI. Human-first had the lowest mean cost numerically and showed clear within-trial corrections, but the direct contrast between human-first and AI-first was not statistically decisive.
 
 ---
 
-## 2. Repository structure
+## 4. Repository structure
 
 ```text
 capstone/
 ├── README.md
 ├── requirements.txt
-├── run.py
+├── run.py                         # main CLI entrypoint for reproduction, validation, summary app, and rebuild modes
 ├── data/
-│   ├── README.md                    # data access guide for official and optional data paths
-│   ├── raw/                         # local-only raw data; large files are not committed
+│   ├── README.md                  # data access guide for official and optional data paths
+│   ├── raw/                       # local-only raw data; large files are not committed
 │   │   └── .gitkeep
-│   ├── processed/                   # local-only processed modeling data
+│   ├── processed/                 # local-only processed modeling data
 │   │   └── .gitkeep
-│   └── experiment_exports/          # Supabase exports used by default reproduction
+│   └── experiment_exports/        # Supabase exports used by default reproduction
 │       ├── participants.csv
 │       ├── trials.csv
 │       └── quiz_responses.csv
 ├── artifacts/
-│   ├── frozen/                      # locked official experiment artifacts
-│   │   ├── candidate_pool_scored.parquet
-│   │   ├── final_cases.csv
-│   │   ├── practice_cases.csv
-│   │   ├── protocol_rotation.csv
-│   │   ├── selection_manifest.json
-│   │   └── cases.lock.json
-│   ├── build/                       # optional upstream rebuild outputs
-│   ├── tables/                      # regenerated final analysis tables
-│   ├── figures/                     # regenerated final analysis figures
-│   └── summary.json                 # regenerated summary of final results
+│   ├── frozen/                    # locked official experiment artifacts
+│   ├── build/                     # optional upstream rebuild outputs
+│   ├── tables/                    # regenerated final analysis tables
+│   ├── figures/                   # regenerated final analysis figures
+│   └── summary.json               # regenerated summary of final results
 ├── codes/
-│   ├── data_prep.py                 # preprocessing helpers for raw LendingClub data
-│   ├── feature_config.py            # feature/target definitions for modeling workflow
-│   ├── notebooks/                   # EDA, modeling, case design, and analysis notebooks
-│   ├── pipelines/                   # official reproduction, validation, rebuild modules
-│   ├── visualizations/              # auxiliary EDA/modeling diagnostic figures
-│   ├── experiment_platform/         # participant-facing Streamlit + Supabase app
-│   └── summary_app/                 # read-only Streamlit summary app
-└── paper/                           # final paper source, bibliography, figures, and PDF
+│   ├── data_prep.py               # preprocessing helpers for raw LendingClub data
+│   ├── feature_config.py          # feature/target definitions for modeling workflow
+│   ├── notebooks/                 # EDA, modeling, case design, and analysis notebooks
+│   ├── pipelines/                 # official reproduction, validation, rebuild modules
+│   ├── visualizations/            # auxiliary EDA/modeling diagnostic figures
+│   ├── experiment_platform/       # participant-facing Streamlit + Supabase app
+│   └── summary_app/               # read-only Streamlit summary app
+└── paper/                         # final paper source, bibliography, figures, and PDF
 ```
 
 Large local-only files are intentionally excluded from GitHub and from the lightweight submission archive:
@@ -97,131 +183,14 @@ data/processed/loan_v1.csv
 
 ---
 
-## 3. Reproducibility commands
+## 5. Data sources and data handling
 
-Run commands from the repository root.
-
-Recommended clean setup:
-
-```bash
-python3.11 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-python run.py --mode validate
-python run.py
-```
-
-The default reproduction does **not** require:
-
-```text
-data/raw/loan.csv
-data/raw/lendingclub_raw_data.zip
-data/processed/loan_v1.csv
-```
-
-The optional upstream rebuild requires:
-
-```text
-data/raw/loan.csv
-```
-
-The processed modeling file is optional and notebook-facing:
-
-```text
-data/processed/loan_v1.csv
-```
-
-It is not required by `python run.py` or `python run.py --mode validate`.
-
-This distinction is central: the official paper reproduction uses included participant exports and frozen experiment artifacts, while the optional rebuild uses the raw LendingClub dataset only for upstream provenance.
-
-### 3.1 Official/default reproduction
-
-```bash
-python run.py
-```
-
-Equivalent explicit command:
-
-```bash
-python run.py --mode paper
-```
-
-Inputs:
+The official reproduction uses included files only:
 
 ```text
 data/experiment_exports/
 artifacts/frozen/
 ```
-
-Outputs:
-
-```text
-artifacts/tables/
-artifacts/figures/
-artifacts/summary.json
-```
-
-This is the official one-command reproduction path for the final behavioral results. It does not require `data/raw/loan.csv`, `data/processed/loan_v1.csv`, Supabase credentials, manual notebook execution, or manual figure editing.
-
-### 3.2 Validation
-
-```bash
-python run.py --mode validate
-```
-
-This checks frozen artifact integrity, experiment-design consistency, platform CSV synchronization, config consistency, and participant-export schema.
-
-### 3.3 Interactive menu
-
-```bash
-python run.py --interactive
-```
-
-This opens a convenience menu for paper reproduction, summary app access, validation, and optional rebuild. It is not needed for automated reproduction.
-
-### 3.4 Summary app
-
-Open the deployed read-only summary app:
-
-```bash
-python run.py --mode summary --summary-target deployed
-```
-
-Launch the local read-only summary app:
-
-```bash
-python run.py --mode summary --summary-target local
-```
-
-The local summary mode first regenerates the paper outputs, then launches Streamlit from `codes/summary_app/app.py`. The deployed summary app is for presentation and exploration. The official reproduction path remains `python run.py`.
-
-Deployed app: https://capstone-explorer.streamlit.app
-
-### 3.5 Optional upstream rebuild
-
-```bash
-python run.py --mode rebuild
-```
-
-This mode requires:
-
-```text
-data/raw/loan.csv
-```
-
-It rebuilds upstream modeling and case-design artifacts into:
-
-```text
-artifacts/build/
-```
-
-It is provenance-only. It is not the official paper reproduction path, and it does not modify `artifacts/frozen/`, `data/experiment_exports/`, `artifacts/tables/`, or `artifacts/figures/`.
-
----
-
-## 4. Data sources and data handling
 
 Large-data access instructions are documented in:
 
@@ -229,22 +198,41 @@ Large-data access instructions are documented in:
 data/README.md
 ```
 
-That file explains both the raw LendingClub archive and the optional processed modeling dataset, including Drive links, expected local paths, and checksums where applicable.
+That file includes the original Kaggle source, Google Drive links for the optional raw and processed data, and expected local paths.
 
-### 4.1 Raw LendingClub data
+### 5.1 Experiment exports
+
+```text
+data/experiment_exports/
+├── participants.csv
+├── trials.csv
+└── quiz_responses.csv
+```
+
+These are Supabase exports collected from the deployed experiment platform. They are fixed inputs for the final behavioral analysis and are required by the official default reproduction.
+
+### 5.2 Frozen experiment artifacts
+
+```text
+artifacts/frozen/
+├── candidate_pool_scored.parquet
+├── final_cases.csv
+├── practice_cases.csv
+├── protocol_rotation.csv
+├── selection_manifest.json
+└── cases.lock.json
+```
+
+These files define the official experiment boundary. They should be treated as locked after data collection. Validation checks the frozen files and verifies that the participant-facing platform copy matches them.
+
+### 5.3 Raw LendingClub data
 
 The upstream raw loan dataset is larger than 1GB and is not included in the GitHub repository or lightweight submission archive.
 
-The default reproduction does **not** require the raw file:
+Original source:
 
 ```text
-data/raw/loan.csv
-```
-
-The raw file is required only for the optional upstream rebuild:
-
-```bash
-python run.py --mode rebuild
+https://www.kaggle.com/datasets/adarshsng/lending-club-loan-data-csv?resource=download
 ```
 
 Expected local path for optional rebuild:
@@ -253,9 +241,15 @@ Expected local path for optional rebuild:
 data/raw/loan.csv
 ```
 
-The official/default paper reproduction uses frozen artifacts and experiment exports, not the raw LendingClub dataset.
+The raw file is required only for:
 
-### 4.2 Raw-to-processed preprocessing
+```bash
+python run.py --mode rebuild
+```
+
+It is not required for `python run.py`.
+
+### 5.4 Raw-to-processed preprocessing
 
 The preprocessing logic is documented in `codes/data_prep.py` and `codes/notebooks/eda.ipynb`.
 
@@ -266,9 +260,7 @@ Charged Off -> target = 1
 Fully Paid  -> target = 0
 ```
 
-Rows with other `loan_status` values are excluded.
-
-Main leakage-removal rule: post-origination repayment, recovery, collection, and payment-history columns are removed before modeling. LendingClub internal `grade` and `sub_grade` are also excluded.
+Rows with other `loan_status` values are excluded. Post-origination repayment, recovery, collection, and payment-history columns are removed before modeling. LendingClub internal `grade` and `sub_grade` are also excluded.
 
 Final model features:
 
@@ -291,71 +283,59 @@ log_annual_inc = log1p(annual_inc)
 credit_history_years = issue_d - earliest_cr_line, in years
 ```
 
-### 4.3 Processed modeling data
+### 5.5 Processed modeling data
 
 ```text
 data/processed/loan_v1.csv
 ```
 
-This file is used by the upstream modeling and case-design notebooks. It is not committed to GitHub and should not be included in the lightweight submission archive because it is approximately 200 MB.
-
-The official default reproduction does not require it, because final behavioral results use frozen experiment artifacts and exported participant data:
-
-```text
-data/experiment_exports/
-artifacts/frozen/
-```
-
-If needed for upstream notebook inspection, the exact processed-data copy is documented in:
-
-```text
-data/README.md
-```
-
-### 4.4 Experiment exports
-
-```text
-data/experiment_exports/
-├── participants.csv
-├── trials.csv
-└── quiz_responses.csv
-```
-
-These are Supabase exports collected from the deployed experiment platform. They are fixed inputs for the final behavioral analysis and are required by the official default reproduction.
-
-### 4.5 Frozen experiment artifacts
-
-```text
-artifacts/frozen/
-├── candidate_pool_scored.parquet
-├── final_cases.csv
-├── practice_cases.csv
-├── protocol_rotation.csv
-├── selection_manifest.json
-└── cases.lock.json
-```
-
-These files define the official experiment boundary. They should be treated as locked after data collection. Validation checks the frozen files and verifies that the participant-facing platform copy matches them.
+This file is used by the upstream notebook workflow. It is not committed to GitHub and should not be included in the lightweight submission archive because it is approximately 200 MB. It is optional and not required for `python run.py`.
 
 ---
 
-## 5. Pipeline modules
+## 6. How to run the code
 
-The pipeline code is in `codes/pipelines/`:
+Run commands from the repository root.
 
-| File | Purpose |
+| Task | Command |
 |---|---|
-| `common.py` | Shared paths, constants, cost logic, loading helpers, hash utilities, and reusable table/figure helpers |
-| `reproduce_paper.py` | Official paper reproduction from `data/experiment_exports/` and `artifacts/frozen/` |
-| `validate_artifacts.py` | Frozen artifact existence, required columns, counts, and manifest/hash consistency |
-| `validate_experiment_design.py` | Design structure, block/protocol rotation, platform CSV sync, config consistency, and export schema |
-| `rebuild_from_upstream.py` | Optional rebuild from `data/raw/loan.csv` into `artifacts/build/` |
+| Official paper reproduction | `python run.py` |
+| Explicit paper mode | `python run.py --mode paper` |
+| Validate artifacts/design/exports | `python run.py --mode validate` |
+| Guided menu | `python run.py --interactive` |
+| Deployed summary app | `python run.py --mode summary --summary-target deployed` |
+| Local summary app | `python run.py --mode summary --summary-target local` |
+| Optional upstream rebuild | `python run.py --mode rebuild` |
 
-The default command regenerates both final tables and final figures.
+### Optional upstream rebuild
+
+Rebuild mode requires:
+
+```text
+data/raw/loan.csv
+```
+
+It writes rebuilt upstream artifacts to:
+
+```text
+artifacts/build/
+```
+
+It is provenance-only. It is not the official paper reproduction path, and it does not modify:
+
+```text
+artifacts/frozen/
+data/experiment_exports/
+artifacts/tables/
+artifacts/figures/
+artifacts/summary.json
+```
+
+If `data/raw/loan.csv` is missing, rebuild mode exits with a clear message explaining where to place the raw file.
 
 ---
 
-## 6. Generated outputs
+## 7. How figures and tables in the paper are generated
 
 Default reproduction writes compact tables to:
 
@@ -389,9 +369,7 @@ case_risk_cost_scatter.png
 normative_deviation_by_difficulty.png
 ```
 
-For the final paper, use the generated figure files from `artifacts/figures/`. Do not manually edit the generated figures outside the code pipeline.
-
-The paper source uses selected figures copied into:
+The paper uses selected figures copied into:
 
 ```text
 paper/figures/
@@ -403,9 +381,48 @@ These are copies of generated files from `artifacts/figures/` for LaTeX compilat
 python run.py
 ```
 
+Do not manually edit the generated figures outside the code pipeline.
+
 ---
 
-## 7. Notebooks
+## 8. Rebuilding the paper PDF
+
+The submitted PDF is included at:
+
+```text
+paper/Anna_Asatryan_DS299_Capstone_Paper.pdf
+```
+
+To rebuild it from LaTeX source:
+
+```bash
+cd paper
+pdflatex main.tex
+bibtex main
+pdflatex main.tex
+pdflatex main.tex
+cp main.pdf Anna_Asatryan_DS299_Capstone_Paper.pdf
+```
+
+The paper figures are copied from `artifacts/figures/` into `paper/figures/` for LaTeX compilation.
+
+---
+
+## 9. Pipeline modules
+
+The pipeline code is in `codes/pipelines/`:
+
+| File | Purpose |
+|---|---|
+| `common.py` | Shared paths, constants, cost logic, loading helpers, hash utilities, and reusable table/figure helpers |
+| `reproduce_paper.py` | Official paper reproduction from `data/experiment_exports/` and `artifacts/frozen/` |
+| `validate_artifacts.py` | Frozen artifact existence, required columns, counts, and manifest/hash consistency |
+| `validate_experiment_design.py` | Design structure, block/protocol rotation, platform CSV sync, config consistency, and export schema |
+| `rebuild_from_upstream.py` | Optional rebuild from `data/raw/loan.csv` into `artifacts/build/` |
+
+---
+
+## 10. Notebooks
 
 The notebooks document the research workflow:
 
@@ -416,13 +433,25 @@ The notebooks document the research workflow:
 | `codes/notebooks/case_design.ipynb` | Audits the locked case design and explains the selection logic; frozen artifacts are the source of truth after data collection |
 | `codes/notebooks/analysis.ipynb` | Computes final behavioral outcomes, paired tests, process metrics, compact tables, and final diagnostic figures |
 
-The notebooks are explanatory and auditable. The official one-command behavioral reproduction is `python run.py`.
+The notebooks are explanatory and auditable. The official one-command behavioral reproduction is:
+
+```bash
+python run.py
+```
 
 ---
 
-## 8. Streamlit apps
+## 11. Streamlit apps
 
-### 8.1 Participant-facing experiment platform
+### 11.1 Participant-facing experiment platform
+
+From the repository root:
+
+```bash
+streamlit run codes/experiment_platform/app.py
+```
+
+Or from inside the platform folder:
 
 ```bash
 cd codes/experiment_platform
@@ -431,7 +460,7 @@ streamlit run app.py
 
 This app requires Supabase credentials in a local Streamlit secrets file. Do not commit real credentials.
 
-### 8.2 Read-only summary app
+### 11.2 Read-only summary app
 
 Preferred local launch:
 
@@ -445,59 +474,17 @@ Alternative direct launch:
 streamlit run codes/summary_app/app.py
 ```
 
+The deployed summary app is available at:
+
+```text
+https://capstone-explorer.streamlit.app
+```
+
 The summary app is for presentation and exploration. It is not required for default reproduction.
 
 ---
 
-## 9. Environment setup
-
-Use Python 3.11. The repository was successfully tested in a clean virtual environment with Python 3.11.1.
-
-Python 3.13 is not recommended for this project because some pinned scientific dependencies may try to build from source instead of installing prebuilt wheels.
-
-### macOS/Linux
-
-```bash
-python3.11 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-python run.py --mode validate
-python run.py
-```
-
-### Windows PowerShell
-
-```powershell
-py -3.11 -m venv .venv
-.\\.venv\\Scripts\\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-python run.py --mode validate
-python run.py
-```
-
-If PowerShell blocks activation:
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\\.venv\\Scripts\\Activate.ps1
-```
-
-### Windows Command Prompt
-
-```cmd
-py -3.11 -m venv .venv
-.venv\\Scripts\\activate.bat
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-python run.py --mode validate
-python run.py
-```
-
----
-
-## 10. Reproducibility statement
+## 12. Reproducibility statement
 
 The repository separates the locked behavioral reproduction path from the optional upstream raw-data rebuild. The default command regenerates the final reported behavioral results from included participant exports and frozen artifacts. The raw LendingClub file and processed modeling dataset are documented but excluded because of size constraints; they are not needed for the official paper reproduction. This structure supports reproducibility while avoiding oversized raw-data commits and private credential leakage.
 

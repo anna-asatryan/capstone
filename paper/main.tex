@@ -9,8 +9,16 @@
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{url}
+\usepackage{float}
+\usepackage{placeins}
+\newcommand{\tighttables}{%
+  \setlength{\textfloatsep}{9pt plus 2pt minus 2pt}%
+  \setlength{\floatsep}{8pt plus 2pt minus 2pt}%
+  \setlength{\intextsep}{8pt plus 2pt minus 2pt}%
+}
 
 \begin{document}
+\tighttables
 
 % ---------------------------------------------------------------
 % TITLE AND AUTHORS
@@ -92,7 +100,7 @@ a judgment. This may improve decision quality by supplying calibrated
 information early, but it also risks anchoring the user on the model
 output and reducing independent evaluation~\cite{rastogi2022deciding}.
 In a human-first workflow, the user first forms an initial judgment and
-only then sees the AI recommendation. This structure can function as a
+only then sees the AI prediction. This structure can function as a
 cognitive forcing mechanism~\cite{bucinca2021trust}, preserving
 independent reasoning before advice exposure, but it may also create
 inertia that makes users less willing to adjust when the model is
@@ -207,7 +215,7 @@ over-reliance, and beneficial override across the full trial set.
 
 Advice timing is connected to anchoring. If the AI output is shown first,
 it may become the reference point around which the human forms a
-judgment~\cite{rastogi2022deciding}. Rastogi et
+judgment. Rastogi et
 al.~\cite{rastogi2022deciding} showed mathematically that anchoring on AI
 predictions can degrade collaborative performance and proposed enforced
 time delays as a de-anchoring mechanism. Their framework informs our
@@ -245,9 +253,11 @@ can increase overreliance.
 
 This motivates our decision to use a probability-based AI representation
 derived from isotonic calibration~\cite{niculescu2005predicting} rather
-than a binary recommendation alone. Our system displays both a predicted
-default probability and a derived cost-sensitive recommendation, allowing
-us to distinguish binary compliance from probability anchoring. The
+than a binary recommendation. The interface displayed the model's
+predicted default probability as the AI output, while the task's cost rule
+was introduced during instructions and remained available throughout the
+experiment. This allowed us to study probability anchoring and revision
+behavior without presenting an explicit approve/reject recommendation. The
 model's mean confidence (probability assigned to the predicted class)
 averages 0.817 when correct and 0.731 when incorrect, yielding a
 discriminative gap that is large enough to be informative but small
@@ -264,15 +274,12 @@ inappropriate reliance. A key implication is that complementary
 performance requires the human to selectively override incorrect AI
 predictions, which demands that human and AI errors be non-overlapping.
 
-Our experimental design tests this directly. We construct 18 cases
-across three difficulty tiers (easy, medium, hard) and two model
-correctness conditions, with each block containing cases where the model
-is both correct and incorrect. This creates opportunities for both
-beneficial reliance and beneficial override, enabling measurement of
-whether interaction timing affects their balance. The medium-difficulty
-tier is of particular interest because cases in this range fall closest
-to the cost-sensitive decision threshold, where model--optimal
-disagreement is most consequential.
+These findings motivate an experimental design in which case difficulty
+and model correctness are both represented. Including cases where the
+model is correct and incorrect creates opportunities to observe both
+beneficial reliance and beneficial override, while medium-difficulty
+cases are especially important because model--optimal disagreement is
+most consequential near the cost-sensitive decision threshold.
 
 Credit decisions provide a well-structured domain for cost-sensitive
 human-AI research~\cite{thomas2009consumer}. The cost asymmetry between
@@ -289,7 +296,7 @@ comparison between human behavior and a cost-minimizing benchmark.
 \subsection{Prediction Task and Data}
 
 The loan default prediction task was built on LendingClub consumer loan
-data. The prediction target was whether a loan defaulted. Only variables
+data~\cite{lendingclub2018}. The prediction target was whether a loan defaulted. Only variables
 observable at loan origination were used; post-outcome fields,
 payment-history variables, and internal credit-grade labels were excluded
 to prevent data leakage. The cleaned modeling dataset contained
@@ -304,10 +311,7 @@ preserves realistic temporal distribution shift and avoids using future
 lending outcomes to build the AI model shown to participants.
 
 The final feature set contains nine variables satisfying four criteria:
-available at decision time, interpretable to lay participants, showing a
-monotonic relationship with default risk in training data, and
-non-redundant. The retained features are loan amount, term, interest
-rate, annual income (log-transformed), debt-to-income ratio, revolving
+available at decision time, understandable to participants without lending expertise, showing a monotonic relationship with default risk in training data, and non-redundant. The retained features are loan amount, term, interest rate, annual income (log-transformed), debt-to-income ratio, revolving
 utilization, home ownership, loan purpose, and credit history length.
 Redundant variables such as installment (functionally determined by loan
 amount, term, and rate) and low-signal variables such as delinquency
@@ -343,21 +347,27 @@ by difficulty tier (easy: 0.025; medium: 0.040; hard: 0.050), reflecting
 higher uncertainty in the ambiguous mid-range where the model has less
 predictive leverage.
 
-\begin{table}[t]
+\begin{table}[H]
   \centering
   \caption{Held-Out Model Performance on the Post-2016 Test Set ($n = 479{,}744$)}
   \label{tab:model}
+  \scriptsize
+  \setlength{\tabcolsep}{3.5pt}
   \begin{tabular}{lccc}
     \toprule
     \textbf{Model} & \textbf{AUC} & \textbf{Brier} & \textbf{ECE} \\
     \midrule
-    Logistic regression         & 0.691 & 0.164 & 0.033 \\
-    XGBoost                     & 0.697 & 0.163 & 0.034 \\
-    Histogram gradient boosting & 0.697 & 0.163 & 0.033 \\
+    Logistic regression   & 0.691 & 0.164 & 0.033 \\
+    XGBoost               & 0.697 & 0.163 & 0.034 \\
+    Hist. grad. boosting  & 0.697 & 0.163 & 0.033 \\
     \bottomrule
-    \multicolumn{4}{l}{\footnotesize Bootstrap 95\% CI for Logistic AUC: [0.690, 0.693];
-      Brier: [0.163, 0.165].}
   \end{tabular}
+
+  \vspace{2pt}
+  \parbox{\columnwidth}{\scriptsize
+    Bootstrap 95\% CI for Logistic AUC: [0.690, 0.693];
+    Brier: [0.163, 0.165].
+  }
 \end{table}
 
 \subsection{Case Selection and Difficulty Stratification}
@@ -397,19 +407,20 @@ locked before participant recruitment and have not been modified since.
 The experiment used three within-subject protocols. In the \emph{no-AI}
 protocol, only the loan profile was displayed; participants entered a
 final binary decision and a probability estimate. In the
-\emph{AI-first} protocol, the model's predicted default probability and
-a derived cost-sensitive recommendation were displayed before the
-participant's decision. In the \emph{human-first} protocol, participants
-first submitted an initial binary decision and probability estimate; the
-AI probability and recommendation were then revealed; participants then
-had the opportunity to revise both responses before final submission.
+\emph{AI-first} protocol, the model's predicted default probability was
+displayed before the participant's decision. In the \emph{human-first}
+protocol, participants first submitted an initial binary decision and
+probability estimate; the AI probability was then revealed, after which
+participants had the opportunity to revise both responses before final
+submission. The asymmetric cost rule was introduced before scored trials
+and remained accessible throughout the experiment.
 
 Table~\ref{tab:protocols} summarizes the three protocol structures.
 The human-first protocol is the only condition that enables pre/post
 revision measurement and WOA analysis; the initial and final submissions
 are stored separately in the database.
 
-\begin{table}[t]
+\begin{table}[H]
   \centering
   \caption{Interaction Protocols Used in the Within-Subject Experiment}
   \label{tab:protocols}
@@ -420,8 +431,8 @@ are stored separately in the database.
     \textbf{Protocol} & \textbf{Participant flow} \\
     \midrule
     No~AI & Loan profile; final probability estimate; approve/reject decision. \\
-    AI-first & Loan profile with AI probability and recommendation; final probability estimate; approve/reject decision. \\
-    Human-first & Loan profile; initial estimate and decision; AI probability and recommendation; final estimate and decision. \\
+    AI-first & Loan profile with AI probability; final probability estimate; approve/reject decision. \\
+    Human-first & Loan profile; initial estimate and decision; AI probability; final estimate and decision. \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -432,9 +443,9 @@ The experiment was implemented as a web application in Streamlit with a
 Supabase backend. The platform enforced protocol-specific trial flow,
 stored participant records, trial-level decisions, probability estimates,
 protocol labels, case identifiers, and timing metadata at the individual
-trial level. This implementation allows behavioral data to be
-reconstructed and linked to frozen experimental cases without storing
-personally identifying information.
+trial level. This implementation allows behavioral data to be reconstructed and linked to frozen experimental cases using anonymous participant identifiers. The study did not collect direct personally identifying information; exported
+data contain participant-level responses, protocol assignments, timing
+metadata, and outcomes needed for reproducible analysis.
 
 Reproducibility was handled through locked artifacts. The case-design
 notebook produced candidate pools and working outputs to a build
@@ -518,27 +529,32 @@ The direct timing contrast between AI-first and human-first was not
 statistically decisive: $\Delta = 0.088$ (95\% CI: $[-0.041,\, 0.218]$;
 $t = 1.356$, $p = 0.178$, $d = 0.136$).
 
-\begin{table}[t]
+\begin{table}[H]
   \centering
   \caption{Primary Outcome: Mean Trial Cost by Protocol ($N=100$)}
   \label{tab:cost}
-  \begin{tabular}{lcccc}
+  \footnotesize
+  \setlength{\tabcolsep}{3.2pt}
+  \begin{tabular}{@{}lcccc@{}}
     \toprule
-    \textbf{Comparison} & \textbf{Mean A} & \textbf{Mean B}
+    \textbf{Comparison} & \textbf{A} & \textbf{B}
       & $\boldsymbol{\Delta}$ & $\boldsymbol{p}$ \\
     \midrule
-    No~AI vs.\ AI-first        & 1.222 & 1.012 & $+0.210$ & 0.017      \\
-    No~AI vs.\ Human-first     & 1.222 & 0.923 & $+0.298$ & $<0.001$   \\
-    AI-first vs.\ Human-first  & 1.012 & 0.923 & $+0.088$ & $0.178$    \\
+    No~AI vs.\ AF & 1.222 & 1.012 & $+0.210$ & 0.017 \\
+    No~AI vs.\ HF & 1.222 & 0.923 & $+0.298$ & $<0.001$ \\
+    AF vs.\ HF    & 1.012 & 0.923 & $+0.088$ & 0.178 \\
     \midrule
-    \multicolumn{2}{l}{Model-optimal ($\tau = 1/6$)$^\dagger$}
-      & 0.333 & --- & --- \\
+    Model-optimal ($\tau=1/6$)$^\dagger$ & --- & 0.333 & --- & --- \\
     \bottomrule
-    \multicolumn{5}{l}{\footnotesize $\Delta$ = Mean~A $-$ Mean~B; positive = A is worse.}\\
-    \multicolumn{5}{l}{\footnotesize $^\dagger$Observed realized cost from applying $\tau=1/6$ to AI probabilities.}\\
-    \multicolumn{5}{l}{\footnotesize 95\% CIs: no~AI vs.\ AI-first $(0.038,\,0.382)$;
-      no~AI vs.\ HF $(0.144,\,0.452)$.}
   \end{tabular}
+
+  \vspace{2pt}
+  \parbox{\columnwidth}{\footnotesize
+    A and B are protocol means; $\Delta=A-B$, so positive values mean A is worse.
+    AF = AI-first; HF = human-first.
+    $^\dagger$Observed realized cost from applying $\tau=1/6$ to AI probabilities.
+    95\% CIs: no~AI vs.\ AF (0.038, 0.382); no~AI vs.\ HF (0.144, 0.452).
+  }
 \end{table}
 
 \subsection{Decision Accuracy}
@@ -548,7 +564,7 @@ Table~\ref{tab:accuracy} shows accuracy contrasts. Mean accuracy was
 Both AI-assisted protocols significantly improved accuracy relative to
 no~AI; the AI-first vs.\ human-first contrast was not significant.
 
-\begin{table}[t]
+\begin{table}[H]
   \centering
   \caption{Secondary Outcome: Accuracy by Protocol ($N=100$)}
   \label{tab:accuracy}
@@ -566,37 +582,41 @@ no~AI; the AI-first vs.\ human-first contrast was not significant.
   \end{tabular}
 \end{table}
 
-The AI benefit by difficulty tier (Table~\ref{tab:diff}) reveals that the
-improvement is concentrated in easy cases: both AI protocols improved
-accuracy by approximately 22 percentage points over no~AI for easy cases
-but by at most 4--5 percentage points for medium and hard cases.
-Because difficulty was defined using training-data empirical default
-uncertainty rather than participant-rated difficulty, these tiers should
-be interpreted as statistical case strata rather than subjective
-difficulty ratings.
+The AI benefit by difficulty tier was concentrated in easy cases
+(Table~\ref{tab:diff}). Because difficulty was defined using
+training-data empirical default uncertainty rather than participant-rated
+difficulty, these tiers should be interpreted as statistical case strata
+rather than subjective difficulty ratings.
 
-\begin{table}[t]
+\begin{table}[H]
   \centering
   \caption{Accuracy by Protocol and Difficulty Tier}
   \label{tab:diff}
-  \begin{tabular}{lccc}
+  \scriptsize
+  \setlength{\tabcolsep}{3.2pt}
+  \begin{tabular}{@{}lccc@{}}
     \toprule
-    \textbf{Difficulty} & \textbf{No~AI} & \textbf{AI-first}
+    \textbf{Tier} & \textbf{No~AI} & \textbf{AI-first}
       & \textbf{Human-first} \\
     \midrule
     Easy   & 59.0\% & 81.0\% & 82.0\% \\
     Medium & 58.0\% & 58.5\% & 62.5\% \\
     Hard   & 48.5\% & 51.0\% & 50.5\% \\
     \bottomrule
-    \multicolumn{4}{l}{\footnotesize 200 trials per cell.}
   \end{tabular}
+
+  \vspace{1pt}
+  \parbox{0.82\columnwidth}{\scriptsize
+    Each cell contains 200 trials.
+  }
 \end{table}
 
 The protocol-level cost and accuracy pattern is summarized in
 Fig.~\ref{fig:cost_accuracy}.
 
-\begin{figure}[!t]
-  \centerline{\includegraphics[width=\columnwidth]{figures/cost_accuracy_by_protocol.png}}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.96\columnwidth]{figures/cost_accuracy_by_protocol.png}
   \caption{Mean trial cost (left) and accuracy (right) by protocol across
     100 participants. Lower cost and higher accuracy are better. Confidence
     intervals for all pairwise contrasts are reported in
@@ -615,7 +635,7 @@ correctness changed, a one-sided exact binomial test confirmed that
 improvements significantly outnumbered worsenings ($90$ vs.\ $32$;
 $p < 0.0001$).
 
-\begin{table}[t]
+\begin{table}[H]
   \centering
   \caption{Human-First Pre/Post Correction Matrix ($n = 600$ trials)}
   \label{tab:correction}
@@ -632,8 +652,9 @@ $p < 0.0001$).
 The same pre/post correction structure is visualized in
 Fig.~\ref{fig:correction_matrix}.
 
-\begin{figure}[b]
-  \centerline{\includegraphics[width=0.82\columnwidth]{figures/human_first_correction_matrix.png}}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.76\columnwidth]{figures/human_first_correction_matrix.png}
   \caption{Human-first correction matrix. Green corresponds to trials that
     improved after AI exposure, red to trials that worsened, and gray to
     trials whose correctness status did not change.}
@@ -649,9 +670,9 @@ adjusted trials, median WOA was 0.869 and mean WOA was 0.861
 0.000) conceals a bimodal pattern: non-adjustment versus near-complete
 adoption of the AI estimate among those who did adjust.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
   \centering
-  \includegraphics[width=\columnwidth]{figures/woa_distribution.png}
+  \includegraphics[width=0.95\columnwidth]{figures/woa_distribution.png}
   \caption{(a) Adjustment incidence among 579 WOA-eligible human-first
     trials. (b) WOA distribution among the 275 adjusted trials
     (those with $|p^{\text{final}} - p^{\text{initial}}| \geq 0.01$).
@@ -666,6 +687,7 @@ distribution has a negative tail: approximately one-third of participants
 showed lower accuracy under AI-supported protocols than under no~AI,
 suggesting a subgroup for whom AI support was not beneficial.
 
+\FloatBarrier
 
 % ---------------------------------------------------------------
 \section{Analysis and Validation}
@@ -723,7 +745,7 @@ benchmark (0.333), a gap that even human-first support ($0.923$) did not
 close. This gap reflects both imperfect calibration and sub-optimal
 threshold application, not model quality.
 
-\begin{table}[t]
+\begin{table}[H]
   \centering
   \caption{Cost Benchmarks on the 18-Case Set}
   \label{tab:bench}
@@ -732,7 +754,7 @@ threshold application, not model quality.
     \textbf{Strategy}                      & \textbf{Cost} \\
     \midrule
     Always approve                          & 2.500 \\
-    Random (50\%)                           & 1.944 \\
+    Random (50\%)                           & 1.500 \\
     Model at $p < 0.5$                      & 1.833 \\
     No~AI (observed)                        & 1.222 \\
     AI-first (observed)                     & 1.012 \\
@@ -813,43 +835,50 @@ generalizability and power limits discussed in Section~\ref{sec:discussion}.
 
 \subsection{Main Contributions}
 
-This paper provides three empirical contributions to human-centered AI
-research. First, a within-subject experiment demonstrating that the same
-calibrated model improves cost-sensitive decisions under both AI-first
-and human-first protocols, with the timing contrast directional but not
-statistically decisive. Second, a decomposition of AI-induced revision
-behavior showing that human-first exposure corrects more errors than it
-introduces. Third, documentation of bimodal WOA behavior in a financial
-domain with explicit cost asymmetry.
+This paper makes three empirical contributions to human-centered AI
+decision-support research. First, it shows in a completed within-subject
+experiment that the same calibrated model improves cost-sensitive
+decisions under both AI-first and human-first workflows relative to
+unaided judgment. Second, it isolates advice timing while holding the
+model, case set, and displayed information constant; human-first produced
+the lowest mean cost descriptively, but the direct timing contrast with
+AI-first was not statistically decisive. Third, it uses the human-first
+condition to measure revision behavior directly, showing that AI exposure
+corrected more initial errors than it introduced and that probability
+adjustment was highly polarized.
 
 \subsection{Design Implications}
 
-The system-level framing has direct implications for AI deployment. In a
-practical screening system, low-risk and high-confidence cases could be
-routed through an AI-first workflow to reduce user burden, while
-borderline or high-stakes cases could require a human-first workflow in
-which the user records an independent judgment before seeing the model
-output. This preserves independent deliberation where anchoring is most
-costly while still allowing efficient support where the model signal is
-strong. The cost gap between no~AI (1.222) and model-optimal (0.333)
-shows that model quality is a necessary but insufficient condition for
-decision improvement. Interaction structure mediates how much of that
-potential is realized. AI-first designs are efficient and show measurable
-improvement, but risk anchoring users on the model before they have
-formed an independent view. Human-first designs preserve deliberation and
-enable revision analysis, but create inertia and require more interface
-complexity.
+The results support a system-level view of AI decision support. Model
+quality alone did not determine realized decision value: even with a
+calibrated probability model, human decisions remained far from the
+model-optimal benchmark. The gap between no AI (1.222), human-first
+(0.923), and model-optimal behavior (0.333) indicates that interface
+timing, threshold interpretation, and revision behavior jointly shape how
+much predictive value is converted into better decisions.
 
-A practical system might apply the human-first structure for high-stakes
-or ambiguous cases---where independent deliberation has the most value---
-while allowing AI-first for cases where the model is highly confident,
-an idea related to learnable deferral~\cite{mozannar2020consistent}.
-Additionally, results suggest that probability support should be paired
-with explicit decision-threshold guidance, as the normative gap between
-the cost-sensitive $\tau$ and the naive 0.5 threshold was a primary
-contributor to suboptimal decisions. This aligns with Zhang et
-al.'s~\cite{zhang2020effect} finding that calibrated confidence improves
-calibration only when users know how to interpret it.
+For applied systems, the results argue against treating advice display as
+a neutral interface detail. AI-first workflows are efficient and improved
+performance relative to no AI, but they may anchor users before they form
+an independent judgment. Human-first workflows preserve independent
+deliberation and make revision behavior observable, but they add friction
+and can create inertia when users should adjust. A practical system could
+therefore reserve human-first interaction for ambiguous, high-stakes, or
+low-confidence cases, while using AI-first interaction for clearer cases
+where the model signal is strong. This recommendation is directional
+rather than prescriptive, because the present sample consisted of
+non-expert participants and the timing contrast was not statistically
+decisive.
+
+The results also suggest that probability support should be paired with
+explicit threshold guidance. Participants often behaved as if the relevant
+decision boundary were closer to 0.5, even though the cost-sensitive
+threshold was $\tau = 1/6$. Thus, showing calibrated probabilities is not
+sufficient if users do not know how those probabilities should translate
+into decisions under asymmetric costs. This aligns with prior work on
+confidence and explanation, which shows that uncertainty information is
+useful only when users can interpret it appropriately~\cite{zhang2020effect}.
+
 
 \subsection{Limitations}
 

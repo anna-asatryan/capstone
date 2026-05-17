@@ -62,6 +62,7 @@ outputs/
 # =========================================================
 data/raw/loan.csv
 data/raw/lendingclub_raw_data.zip
+data/processed/loan_v1.csv
 
 # Optional compressed raw-data variants
 data/raw/*.zip

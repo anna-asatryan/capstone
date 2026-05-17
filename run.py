@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 import webbrowser
@@ -141,9 +142,12 @@ def run_summary(target: str = "local") -> None:
     print(f"      Deployed URL: {DEPLOYED_SUMMARY_URL}")
 
     try:
+        env = os.environ.copy()
+        env["STREAMLIT_BROWSER_GATHER_USAGE_STATS"] = "false"
         subprocess.run(
             [sys.executable, "-m", "streamlit", "run", "codes/summary_app/app.py"],
             check=False,
+            env=env,
         )
     except KeyboardInterrupt:
         print("\nSummary app stopped by user.")
