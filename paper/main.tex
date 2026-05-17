@@ -4,14 +4,11 @@
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
-\usepackage{float}
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{url}
-\usepackage{placeins}
-\urlstyle{same}
 
 \begin{document}
 
@@ -63,10 +60,11 @@ not statistically decisive ($\Delta = 0.088$, $p = 0.178$, $d =
 versus 32 it introduced. Weight-of-advice analysis revealed polarized
 reliance: 52.5\% of trials showed no probability adjustment, while
 adjusted trials moved strongly toward the AI estimate (median WOA $=
-0.869$). Because participants were mostly young non-experts and each
-completed only 18 scored trials, the results should be interpreted as
-controlled evidence about interaction design rather than direct guidance
-for professional lending deployment.
+0.869$). Although the sample was predominantly young non-experts
+completing an 18-trial session, limiting external validity to
+professional settings, the findings support a system-level view:
+realized decision value depends not only on model quality but also on
+interaction structure, cost framing, and selective revision behavior.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -642,7 +640,7 @@ $p < 0.0001$).
 The same pre/post correction structure is visualized in
 Fig.~\ref{fig:correction_matrix}.
 
-\begin{figure}[!b]
+\begin{figure}[b]
   \centerline{\includegraphics[width=0.82\columnwidth]{figures/human_first_correction_matrix.png}}
   \caption{Human-first correction matrix. Green corresponds to trials that
     improved after AI exposure, red to trials that worsened, and gray to
@@ -659,7 +657,7 @@ adjusted trials, median WOA was 0.869 and mean WOA was 0.861
 0.000) conceals a bimodal pattern: non-adjustment versus near-complete
 adoption of the AI estimate among those who did adjust.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\columnwidth]{figures/woa_distribution.png}
   \caption{(a) Adjustment incidence among 579 WOA-eligible human-first
@@ -676,7 +674,6 @@ distribution has a negative tail: approximately one-third of participants
 showed lower accuracy under AI-supported protocols than under no~AI,
 suggesting a subgroup for whom AI support was not beneficial.
 
-\FloatBarrier
 
 % ---------------------------------------------------------------
 \section{Analysis and Validation}
@@ -799,7 +796,7 @@ indicating that participants' own probability estimates were more
 consistent with the cost-sensitive rule than their actual decisions.
 The case-level cost pattern is shown in Fig.~\ref{fig:case_scatter}.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.92\columnwidth]{figures/case_risk_cost_scatter.png}
   \caption{Case-level mean cost by AI-predicted default probability. Each
@@ -808,12 +805,6 @@ The case-level cost pattern is shown in Fig.~\ref{fig:case_scatter}.
     $\tau=1/6$.}
   \label{fig:case_scatter}
 \end{figure}
-
-
-
-
-
-
 
 % ---------------------------------------------------------------
 \section{Discussion and Conclusion}
@@ -925,7 +916,59 @@ workflow through which model outputs reach human judgment.
 \section*{Acknowledgment}
 % ---------------------------------------------------------------
 
-The author thanks the study participants and the American University of Armenia.
+The author thanks Karen Hovhannisyan for supervising this capstone project,
+the study participants for their time, and the American University of
+Armenia for academic support. The author used Claude AI for language
+editing and style refinement of the manuscript. All analyses, results,
+interpretations, and final decisions were reviewed and verified by the
+author.
+
+% ---------------------------------------------------------------
+\appendices
+\section{Experiment Platform Implementation}
+\label{app:platform}
+% ---------------------------------------------------------------
+
+The behavioral experiment was implemented as a Streamlit web application
+with Supabase/PostgreSQL persistence. The participant-facing app used a
+phase-router structure: the entry point established a browser session
+identifier, resumed incomplete sessions when the same identifier was found
+in Supabase, routed completed sessions to an already-completed screen, and
+selected the appropriate UI screen from a phase-to-screen router. The main
+participant flow was consent, demographics, glossary and instructions,
+comprehension quiz, two practice trials with feedback, three scored blocks
+of six trials each, reflection questions, trust rating, performance
+summary, and thank-you screen.
+
+Each scored block used exactly one protocol
+(\texttt{no\_ai}, \texttt{ai\_first}, or \texttt{human\_first}), and each
+participant saw all three protocols exactly once. Protocol order was
+assigned using the locked Latin-square rotation for \texttt{group\_1},
+\texttt{group\_2}, and \texttt{group\_3}. The deployed platform loaded the
+18 scored cases, two practice cases, and protocol rotation from frozen CSV
+files rather than manually embedding experimental stimuli in code.
+
+The Supabase schema used three principal tables:
+\texttt{participants}, \texttt{trials}, and
+\texttt{quiz\_responses}. The \texttt{participants} table stored group
+assignment, completion state, session-resumption fields, total and optimal
+cost, trust rating, and post-trial reflection responses. The
+\texttt{trials} table stored one row per practice or scored trial,
+including protocol, case identifier, AI prediction, true outcome,
+initial/final judgments, probability estimates, timing fields, and
+correctness indicators. The \texttt{quiz\_responses} table logged
+comprehension-quiz answers by participant, attempt, and question. Trial
+rows used a uniqueness constraint on \texttt{(participant\_id,
+trial\_index)} to prevent duplicate submissions.
+
+The implementation separated responsibilities across modules: the app
+entry point handled session bootstrap and routing, a database module
+isolated Supabase reads/writes, and an experiment-logic module handled
+group assignment, deterministic trial sequencing, and scoring. A demo mode
+was available for presentation without storing study responses. After data
+collection, completed participant, trial, and quiz tables were exported
+from Supabase as CSV files under \texttt{data/experiment\_exports/}, which
+are the direct inputs to the official reproduction pipeline.
 
 % ---------------------------------------------------------------
 \bibliographystyle{IEEEtran}
