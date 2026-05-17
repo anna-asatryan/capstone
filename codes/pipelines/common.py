@@ -9,13 +9,19 @@ from typing import Any
 
 import pandas as pd
 
-
 ROOT_DIR = Path(__file__).resolve().parents[2]
+DATA_DIR = ROOT_DIR / "data"
 ARTIFACTS_DIR = ROOT_DIR / "artifacts"
 FROZEN_ARTIFACTS_DIR = ARTIFACTS_DIR / "frozen"
-ANALYSIS_DIR = ARTIFACTS_DIR / "analysis"
-REBUILD_DIR = ARTIFACTS_DIR / "rebuild"
-DATA_DIR = ROOT_DIR / "data"
+BUILD_DIR = ARTIFACTS_DIR / "build"
+REBUILD_DIR = BUILD_DIR  # backward-compatible alias
+TABLES_DIR = ARTIFACTS_DIR / "tables"
+FIGURES_DIR = ARTIFACTS_DIR / "figures"
+ANALYSIS_DIR = ARTIFACTS_DIR  # summary.json lives at artifacts/summary.json by default
+
+RAW_DATA_PATH = DATA_DIR / "raw" / "loan.csv"
+PROCESSED_DATA_PATH = DATA_DIR / "processed" / "loan_v1.csv"
+EXPERIMENT_EXPORTS_DIR = DATA_DIR / "experiment_exports"
 
 OFFICIAL_FROZEN_FILES = [
     "final_cases.csv",
@@ -53,9 +59,11 @@ REQUIRED_CASE_COLUMNS = [
     "difficulty_score",
 ]
 
-C_FN = 5000
-C_FP = 1000
+# Paper-facing cost units.  Approving a defaulter costs 5; rejecting a good loan costs 1.
+C_FN = 5
+C_FP = 1
 TAU = C_FP / (C_FP + C_FN)
+SCORED_BLOCKS = {"block_1", "block_2", "block_3"}
 
 
 def ensure_directory(path: Path) -> Path:
@@ -90,7 +98,59 @@ def read_json(path: Path) -> dict[str, Any]:
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+
+
+def trial_cost(decision: int, y_true: int, c_fn: int = C_FN, c_fp: int = C_FP) -> int:
+    """Decision coding: 1=approve, 0=reject; y_true=1 means default."""
+    if decision == 1 and y_true == 1:
+        return c_fn
+    if decision == 0 and y_true == 0:
+        return c_fp
+    return 0
+
+
+def compute_decision_correct(decision: pd.Series, y_true: pd.Series) -> pd.Series:
+    return (((decision == 1) & (y_true == 0)) | ((decision == 0) & (y_true == 1))).astype(int)
+
+
+def normalize_probability_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Convert percentage-coded probability estimates to [0,1] when needed."""
+    out = df.copy()
+    for col in ["pred_prob", "prob_estimate_init", "prob_estimate_final"]:
+        if col in out.columns and out[col].dropna().max() > 1.0:
+            out[col] = out[col] / 100.0
+    return out
+
+
+def completed_scored_trials(participants: pd.DataFrame, trials: pd.DataFrame) -> pd.DataFrame:
+    participants = participants.copy()
+    trials = normalize_probability_columns(trials)
+    if "completed" in participants.columns:
+        completed_ids = set(participants.loc[participants["completed"].fillna(False).astype(bool), "id"])
+    else:
+        completed_ids = set(participants["id"])
+    if "block" in trials.columns:
+        scored_mask = trials["block"].isin(SCORED_BLOCKS)
+    else:
+        scored_mask = trials["trial_index"] >= 1
+    scored = trials.loc[trials["participant_id"].isin(completed_ids) & scored_mask].copy()
+    if "participant_group" in participants.columns:
+        scored["participant_group"] = scored["participant_id"].map(participants.set_index("id")["participant_group"])
+    return scored.reset_index(drop=True)
+
+
+def add_behavioral_columns(trials: pd.DataFrame) -> pd.DataFrame:
+    df = normalize_probability_columns(trials)
+    df = df.copy()
+    df["decision_correct"] = compute_decision_correct(df["decision_final"].astype(int), df["y_true"].astype(int))
+    df["trial_cost"] = [trial_cost(int(d), int(y)) for d, y in zip(df["decision_final"], df["y_true"])]
+    df["optimal_decision"] = (df["pred_prob"] < TAU).astype(int)
+    df["optimal_cost"] = [trial_cost(int(d), int(y)) for d, y in zip(df["optimal_decision"], df["y_true"])]
+    df["cost_excess"] = df["trial_cost"] - df["optimal_cost"]
+    df["normative_deviation"] = (df["decision_final"].astype(int) != df["optimal_decision"].astype(int)).astype(int)
+    return df
 
 
 def enrich_candidate_pool(df: pd.DataFrame) -> pd.DataFrame:
@@ -98,21 +158,12 @@ def enrich_candidate_pool(df: pd.DataFrame) -> pd.DataFrame:
     enriched["pred_prob"] = enriched["pred_prob"].clip(1e-6, 1 - 1e-6)
     enriched["model_pred_class"] = (enriched["pred_prob"] >= 0.5).astype(int)
     enriched["correct"] = (enriched["model_pred_class"] == enriched["y_true"]).astype(int)
-    enriched["confidence"] = enriched["pred_prob"].where(
-        enriched["pred_prob"] >= 0.5,
-        1 - enriched["pred_prob"],
-    )
-    enriched["fp"] = (
-        (enriched["model_pred_class"] == 1) & (enriched["y_true"] == 0)
-    ).astype(int)
-    enriched["fn"] = (
-        (enriched["model_pred_class"] == 0) & (enriched["y_true"] == 1)
-    ).astype(int)
+    enriched["confidence"] = enriched["pred_prob"].where(enriched["pred_prob"] >= 0.5, 1 - enriched["pred_prob"])
+    enriched["fp"] = ((enriched["model_pred_class"] == 1) & (enriched["y_true"] == 0)).astype(int)
+    enriched["fn"] = ((enriched["model_pred_class"] == 0) & (enriched["y_true"] == 1)).astype(int)
     enriched["model_decision"] = (enriched["pred_prob"] < 0.5).astype(int)
     enriched["optimal_decision"] = (enriched["pred_prob"] < TAU).astype(int)
-    enriched["model_optimal"] = (
-        enriched["model_decision"] == enriched["optimal_decision"]
-    ).astype(int)
+    enriched["model_optimal"] = (enriched["model_decision"] == enriched["optimal_decision"]).astype(int)
     if "conf_bin" not in enriched.columns or enriched["conf_bin"].isna().any():
         def assign_conf_bin(values: pd.Series) -> pd.Series:
             if len(values) < 2 or values.nunique() < 2:
@@ -122,12 +173,7 @@ def enrich_candidate_pool(df: pd.DataFrame) -> pd.DataFrame:
             if getattr(bins, "nunique", lambda: 0)() == 1:
                 return pd.Series(["low"] * len(values), index=values.index)
             return pd.Series(bins.astype(str), index=values.index)
-
-        enriched["conf_bin"] = (
-            enriched.groupby("difficulty_tier", observed=True)["confidence"]
-            .transform(assign_conf_bin)
-            .astype(str)
-        )
+        enriched["conf_bin"] = enriched.groupby("difficulty_tier", observed=True)["confidence"].transform(assign_conf_bin).astype(str)
     else:
         enriched["conf_bin"] = enriched["conf_bin"].astype(str)
     return enriched
@@ -154,93 +200,34 @@ def compute_ece(y_true: pd.Series | list[float], y_prob: pd.Series | list[float]
     y_prob_series = pd.Series(y_prob, dtype="float64").clip(1e-6, 1 - 1e-6)
     bins = pd.interval_range(start=0.0, end=1.0, periods=n_bins)
     bucketed = pd.cut(y_prob_series, bins=bins)
-    working = pd.DataFrame(
-        {"y_true": y_true_series, "y_prob": y_prob_series, "bucket": bucketed}
-    ).dropna()
+    working = pd.DataFrame({"y_true": y_true_series, "y_prob": y_prob_series, "bucket": bucketed}).dropna()
     if working.empty:
         return 0.0
-
-    grouped = working.groupby("bucket", observed=True)
     ece = 0.0
     total = float(len(working))
-    for _, group in grouped:
-        weight = len(group) / total
-        ece += weight * abs(group["y_true"].mean() - group["y_prob"].mean())
+    for _, group in working.groupby("bucket", observed=True):
+        ece += (len(group) / total) * abs(group["y_true"].mean() - group["y_prob"].mean())
     return float(ece)
 
 
-def trial_cost(decision: int, y_true: int, c_fn: int = C_FN, c_fp: int = C_FP) -> int:
-    if decision == 1 and y_true == 1:
-        return c_fn
-    if decision == 0 and y_true == 0:
-        return c_fp
-    return 0
+def brier_score(y_true: pd.Series, y_prob: pd.Series) -> float:
+    return float(((y_prob - y_true) ** 2).mean())
 
 
-def load_experiment_export_summary(experiment_exports_dir: Path) -> dict[str, Any] | None:
-    participants_path = experiment_exports_dir / "participants.csv"
-    trials_path = experiment_exports_dir / "trials.csv"
-    if not participants_path.exists() or not trials_path.exists():
-        return None
+def log_loss_score(y_true: pd.Series, y_prob: pd.Series) -> float:
+    clipped = y_prob.clip(1e-6, 1 - 1e-6)
+    return float(-(y_true * clipped.map(math.log) + (1 - y_true) * (1 - clipped).map(math.log)).mean())
 
-    participants = pd.read_csv(participants_path)
-    trials = pd.read_csv(trials_path)
 
-    summary: dict[str, Any] = {
-        "completed_participants": int(
-            participants.get("completed", pd.Series(dtype="bool")).fillna(False).sum()
-        )
-        if "completed" in participants.columns
-        else int(len(participants)),
-        "trial_rows": int(len(trials)),
-    }
-
-    tables: dict[str, pd.DataFrame] = {}
-    notes: list[str] = []
-
-    if {"protocol", "decision_final", "y_true"}.issubset(trials.columns):
-        protocol_df = trials.copy()
-        protocol_df["correct_final"] = (
-            protocol_df["decision_final"] != protocol_df["y_true"]
-        ).astype(int)
-        protocol_df["trial_cost"] = protocol_df.apply(
-            lambda row: trial_cost(int(row["decision_final"]), int(row["y_true"])),
-            axis=1,
-        )
-        tables["participant_protocol_summary"] = (
-            protocol_df.groupby("protocol", observed=True)
-            .agg(
-                trials=("protocol", "size"),
-                mean_accuracy=("correct_final", "mean"),
-                mean_cost=("trial_cost", "mean"),
-            )
-            .reset_index()
-        )
-    else:
-        notes.append(
-            "Participant trials export is present, but it does not include the columns needed for protocol-level accuracy/cost summaries."
-        )
-
-    if {"protocol", "decision_init", "decision_final"}.issubset(trials.columns):
-        human_first = trials[trials["protocol"] == "human_first"].copy()
-        if not human_first.empty:
-            human_first["changed_mind"] = (
-                human_first["decision_init"] != human_first["decision_final"]
-            ).astype(int)
-            tables["participant_reliance_summary"] = (
-                human_first.groupby("protocol", observed=True)
-                .agg(
-                    trials=("protocol", "size"),
-                    revision_rate=("changed_mind", "mean"),
-                )
-                .reset_index()
-            )
-    else:
-        notes.append(
-            "Reliance summaries need `decision_init` and `decision_final` columns in the frozen trial export."
-        )
-
-    return {"summary": summary, "tables": tables, "notes": notes}
+def roc_auc(y_true: pd.Series, y_prob: pd.Series) -> float:
+    working = pd.DataFrame({"y_true": y_true, "y_prob": y_prob}).sort_values("y_prob")
+    positives = float(working["y_true"].sum())
+    negatives = float(len(working) - positives)
+    if positives == 0 or negatives == 0:
+        return 0.5
+    ranks = working["y_prob"].rank(method="average")
+    sum_ranks_positive = float(ranks[working["y_true"] == 1].sum())
+    return (sum_ranks_positive - positives * (positives + 1) / 2.0) / (positives * negatives)
 
 
 def model_metrics_table(candidate_pool: pd.DataFrame) -> pd.DataFrame:
@@ -254,89 +241,37 @@ def model_metrics_table(candidate_pool: pd.DataFrame) -> pd.DataFrame:
         "approval_rate_at_tau": float((candidate_pool["pred_prob"] < TAU).mean()),
         "approval_rate_at_0_5": float((candidate_pool["pred_prob"] < 0.5).mean()),
     }
-    return pd.DataFrame(
-        [{"metric": key, "value": round(value, 6)} for key, value in metrics.items()]
-    )
-
-
-def brier_score(y_true: pd.Series, y_prob: pd.Series) -> float:
-    return float(((y_prob - y_true) ** 2).mean())
-
-
-def log_loss_score(y_true: pd.Series, y_prob: pd.Series) -> float:
-    clipped = y_prob.clip(1e-6, 1 - 1e-6)
-    return float(
-        -(
-            y_true * clipped.map(math.log)
-            + (1 - y_true) * (1 - clipped).map(math.log)
-        ).mean()
-    )
-
-
-def roc_auc(y_true: pd.Series, y_prob: pd.Series) -> float:
-    working = pd.DataFrame({"y_true": y_true, "y_prob": y_prob}).sort_values(
-        "y_prob"
-    )
-    positives = float(working["y_true"].sum())
-    negatives = float(len(working) - positives)
-    if positives == 0 or negatives == 0:
-        return 0.5
-
-    ranks = working["y_prob"].rank(method="average")
-    sum_ranks_positive = float(ranks[working["y_true"] == 1].sum())
-    return (sum_ranks_positive - positives * (positives + 1) / 2.0) / (
-        positives * negatives
-    )
+    return pd.DataFrame([{"metric": key, "value": round(value, 6)} for key, value in metrics.items()])
 
 
 def calibration_table(candidate_pool: pd.DataFrame, n_bins: int = 10) -> pd.DataFrame:
     working = candidate_pool[["y_true", "pred_prob"]].copy()
-    working["bin"] = pd.cut(
-        working["pred_prob"],
-        bins=pd.interval_range(start=0.0, end=1.0, periods=n_bins),
-    )
-    grouped = (
-        working.groupby("bin", observed=True)
-        .agg(
-            count=("pred_prob", "size"),
-            mean_pred_prob=("pred_prob", "mean"),
-            observed_rate=("y_true", "mean"),
-        )
-        .reset_index()
-    )
+    working["bin"] = pd.cut(working["pred_prob"], bins=pd.interval_range(start=0.0, end=1.0, periods=n_bins))
+    grouped = working.groupby("bin", observed=True).agg(count=("pred_prob", "size"), mean_pred_prob=("pred_prob", "mean"), observed_rate=("y_true", "mean")).reset_index()
     grouped["bin_label"] = grouped["bin"].astype(str)
     grouped["gap"] = grouped["observed_rate"] - grouped["mean_pred_prob"]
     return grouped[["bin_label", "count", "mean_pred_prob", "observed_rate", "gap"]]
 
 
 def difficulty_summary_table(candidate_pool: pd.DataFrame) -> pd.DataFrame:
-    return (
-        candidate_pool.groupby("difficulty_tier", observed=True)
-        .agg(
-            n=("case_id", "size"),
-            default_rate=("y_true", "mean"),
-            mean_pred_prob=("pred_prob", "mean"),
-            mean_confidence=("confidence", "mean"),
-            model_accuracy=("correct", "mean"),
-            model_optimal_agreement=("model_optimal", "mean"),
-        )
-        .reset_index()
-        .sort_values("difficulty_tier")
-    )
+    return candidate_pool.groupby("difficulty_tier", observed=True).agg(
+        n=("case_id", "size"),
+        default_rate=("y_true", "mean"),
+        mean_pred_prob=("pred_prob", "mean"),
+        mean_confidence=("confidence", "mean"),
+        model_accuracy=("correct", "mean"),
+        model_optimal_agreement=("model_optimal", "mean"),
+    ).reset_index().sort_values("difficulty_tier")
 
 
 def selection_cells_table(final_cases: pd.DataFrame) -> pd.DataFrame:
-    return (
-        final_cases.groupby(["difficulty_tier", "correct"], observed=True)
-        .agg(
-            n=("case_id", "size"),
-            min_pred_prob=("pred_prob", "min"),
-            mean_pred_prob=("pred_prob", "mean"),
-            max_pred_prob=("pred_prob", "max"),
-            mean_confidence=("confidence", "mean"),
-        )
-        .reset_index()
-    )
+    return final_cases.groupby(["difficulty_tier", "correct"], observed=True).agg(
+        n=("case_id", "size"),
+        min_pred_prob=("pred_prob", "min"),
+        mean_pred_prob=("pred_prob", "mean"),
+        max_pred_prob=("pred_prob", "max"),
+        mean_confidence=("confidence", "mean"),
+    ).reset_index()
 
 
 def case_cost_table(final_cases: pd.DataFrame) -> pd.DataFrame:
@@ -349,15 +284,8 @@ def case_cost_table(final_cases: pd.DataFrame) -> pd.DataFrame:
     }
     rows = []
     for strategy_name, decisions in strategy_definitions.items():
-        average_cost = sum(
-            trial_cost(int(decision), int(label)) for decision, label in zip(decisions, y_true)
-        ) / len(final_cases)
-        rows.append(
-            {
-                "strategy": strategy_name,
-                "avg_cost_per_case": round(float(average_cost), 6),
-            }
-        )
+        average_cost = sum(trial_cost(int(decision), int(label)) for decision, label in zip(decisions, y_true)) / len(final_cases)
+        rows.append({"strategy": strategy_name, "avg_cost_per_case": round(float(average_cost), 6)})
     return pd.DataFrame(rows)
 
 
@@ -365,18 +293,16 @@ def protocol_design_table(protocol_rotation: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for _, row in protocol_rotation.iterrows():
         for block_name in ["block_1", "block_2", "block_3"]:
-            rows.append(
-                {
-                    "participant_group": row["participant_group"],
-                    "block": block_name,
-                    "protocol": row[f"{block_name}_protocol"],
-                    "target_n": row.get("target_n"),
-                }
-            )
+            rows.append({
+                "participant_group": row["participant_group"],
+                "block": block_name,
+                "protocol": row[f"{block_name}_protocol"],
+                "target_n": row.get("target_n"),
+            })
     return pd.DataFrame(rows)
 
 
-def write_analysis_outputs(
+def write_design_outputs(
     *,
     mode: str,
     final_cases: pd.DataFrame,
@@ -386,44 +312,28 @@ def write_analysis_outputs(
     manifest: dict[str, Any],
     warnings: list[str] | None = None,
     output_dir: Path | None = None,
-    experiment_exports_dir: Path | None = None,
     exact_case_match: bool | None = None,
 ) -> Path:
-    warnings = warnings or []
+    """Write compact design/model tables. Does not duplicate the full candidate pool CSV."""
     output_path = ensure_directory(output_dir or ANALYSIS_DIR)
     tables_dir = ensure_directory(output_path / "tables")
-
-    model_metrics = model_metrics_table(candidate_pool)
-    calibration = calibration_table(candidate_pool)
-    difficulty = difficulty_summary_table(candidate_pool)
-    selection = selection_cells_table(final_cases)
-    cost = case_cost_table(final_cases)
-    protocol_design = protocol_design_table(protocol_rotation)
+    warnings = warnings or []
 
     final_cases.to_csv(tables_dir / "final_cases.csv", index=False)
     practice_cases.to_csv(tables_dir / "practice_cases.csv", index=False)
-    candidate_pool.to_csv(tables_dir / "candidate_pool_scored.csv", index=False)
     protocol_rotation.to_csv(tables_dir / "protocol_rotation.csv", index=False)
-    model_metrics.to_csv(tables_dir / "model_metrics.csv", index=False)
-    calibration.to_csv(tables_dir / "calibration_bins.csv", index=False)
-    difficulty.to_csv(tables_dir / "difficulty_summary.csv", index=False)
-    selection.to_csv(tables_dir / "selection_cells.csv", index=False)
-    cost.to_csv(tables_dir / "case_costs.csv", index=False)
-    protocol_design.to_csv(tables_dir / "protocol_design.csv", index=False)
-
-    export_bundle = None
-    if experiment_exports_dir is not None:
-        export_bundle = load_experiment_export_summary(experiment_exports_dir)
-        if export_bundle:
-            for table_name, table_df in export_bundle["tables"].items():
-                table_df.to_csv(tables_dir / f"{table_name}.csv", index=False)
-            warnings.extend(export_bundle["notes"])
+    model_metrics_table(candidate_pool).to_csv(tables_dir / "model_metrics.csv", index=False)
+    calibration_table(candidate_pool).to_csv(tables_dir / "calibration_bins.csv", index=False)
+    difficulty_summary_table(candidate_pool).to_csv(tables_dir / "difficulty_summary.csv", index=False)
+    selection_cells_table(final_cases).to_csv(tables_dir / "selection_cells.csv", index=False)
+    case_cost_table(final_cases).to_csv(tables_dir / "case_costs.csv", index=False)
+    protocol_design_table(protocol_rotation).to_csv(tables_dir / "protocol_design.csv", index=False)
 
     summary = {
         "mode": mode,
         "git_commit": git_commit_hash(),
         "official_frozen_dir": str(FROZEN_ARTIFACTS_DIR.relative_to(ROOT_DIR)),
-        "analysis_dir": str(output_path.relative_to(ROOT_DIR)),
+        "output_dir": str(output_path.relative_to(ROOT_DIR)),
         "warnings": warnings,
         "exact_case_match_to_official_frozen": exact_case_match,
         "selection_manifest": manifest,
@@ -432,14 +342,11 @@ def write_analysis_outputs(
             "practice_cases": int(len(practice_cases)),
             "candidate_pool_rows": int(len(candidate_pool)),
             "blocks": int(final_cases["block"].nunique()),
-            "difficulty_tiers": sorted(
-                final_cases["difficulty_tier"].dropna().astype(str).unique().tolist()
-            ),
+            "difficulty_tiers": sorted(final_cases["difficulty_tier"].dropna().astype(str).unique().tolist()),
         },
-        "model_metrics": {
-            row["metric"]: row["value"] for row in model_metrics.to_dict(orient="records")
-        },
-        "participant_exports": export_bundle["summary"] if export_bundle else None,
     }
     write_json(output_path / "summary.json", summary)
     return output_path
+
+# Backward-compatible name used by older modules.
+write_analysis_outputs = write_design_outputs

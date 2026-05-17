@@ -69,8 +69,8 @@ def load_data(root_str: Optional[str] = None) -> AppData:
         quiz = _read_csv(APP_DATA / "quiz_responses.csv")
         cases = _read_csv(APP_DATA / "final_cases.csv")
     else:
-        exports = root / "artifacts" / "db_exports"
-        analysis_tables = root / "artifacts" / "analysis" / "tables"
+        exports = root / "data" / "experiment_exports"
+        analysis_tables = root / "artifacts" / "tables"
         frozen = root / "artifacts" / "frozen"
         build = root / "artifacts" / "build"
 
@@ -82,7 +82,7 @@ def load_data(root_str: Optional[str] = None) -> AppData:
             cases = _read_csv(build / "final_cases.csv")
 
     if participants.empty or trials.empty:
-        warnings.append("Could not find participants.csv or trials.csv under summary_app/data/ or artifacts/db_exports/.")
+        warnings.append("Could not find participants.csv or trials.csv under summary_app/data/ or data/experiment_exports/.")
         return AppData(root, participants, trials, quiz, cases, trials, set(), warnings)
 
     # Probability scale guard.

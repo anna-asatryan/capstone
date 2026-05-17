@@ -1,77 +1,95 @@
 # Summary App — Human-AI Decision Explorer
 
-This folder replaces the old `codes/summary_app` with an interactive poster companion app.
-It is intentionally **not** a copy of the poster. The poster gives the compressed story; this app lets judges inspect the evidence in more depth.
+This folder contains the Streamlit summary app used as an interactive companion to the capstone poster and final paper.
+It is a **read-only analysis app**: it loads already-exported study data and lets a reviewer inspect the main behavioral results in more detail. 
 
-## What it shows
+## Purpose
 
-- **Overview**: headline protocol results and main behavioral findings.
-- **Protocol Comparator**: cost, accuracy, Brier score, AI-distance, and carryover sensitivity.
-- **Human-First Revision**: initial → final decision switch matrix and Sankey flow.
-- **Reliance Explorer**: WOA distribution, zero-inflation, reliance decomposition, participant heterogeneity.
-- **Case Explorer**: case-level outcomes for each loan stimulus.
-- **Platform Demo**: optional link to a safe demo version of the behavioral platform.
+The app complements the static poster by exposing the underlying evidence behind the main findings:
 
-## Expected repo location
+- protocol-level decision cost and accuracy;
+- human-first revision behavior;
+- weight-of-advice (WOA) and reliance patterns;
+- case-level behavior across the 18 locked loan cases;
+- an optional safe demo link to the participant-facing experiment platform.
 
-Place this folder at:
+## Main pages
+
+- **Overview** — high-level study summary, workflow explanation, key findings, and demo button.
+- **Protocol Comparator** — protocol-level outcome comparisons (cost, accuracy, Brier score, approval rate, paired contrasts, and selected sensitivity checks).
+- **Human-First Revision** — pre/post revision behavior in the human-first condition, including correction counts and revision paths.
+- **Reliance Explorer** — WOA distribution and threshold-implied action alignment.
+- **Case Explorer** — case-level risk/cost view and where AI support helped or hurt case-by-case.
+
+## Folder structure
 
 ```text
-codes/summary_app/
+summary_app/
+├── app.py                    # Streamlit entrypoint
+├── charts.py                 # Plotly chart builders
+├── components.py             # reusable UI helpers and CSS loader
+├── data_loader.py            # bundled-data / repo-artifact loading logic
+├── metrics.py                # analysis helpers used by the app
+├── README.md                 # this file
+├── requirements.txt          # app dependencies
+├── .streamlit/
+│   └── config.toml           # Streamlit UI configuration
+├── assets/
+│   ├── styles.css            # custom app styling
+│   └── hai1.png              # overview workflow background image
+└── data/
+    ├── participants.csv      # bundled participant export
+    ├── trials.csv            # bundled trial-level export
+    ├── quiz_responses.csv    # bundled onboarding quiz export
+    ├── final_cases.csv       # locked 18 scored cases
+    ├── practice_cases.csv    # locked 2 practice cases
+    └── protocol_rotation.csv # locked protocol rotation
 ```
 
-The app locates the capstone repo root by searching upward for `artifacts/`.
-It reads:
+## Data loading behavior
 
-```text
-artifacts/db_exports/participants.csv
-artifacts/db_exports/trials.csv
-artifacts/db_exports/quiz_responses.csv
-artifacts/frozen/final_cases.csv   # optional but recommended
-artifacts/analysis/tables/ai_benefit_heterogeneity.csv  # optional
-```
+The app first tries to load the bundled CSV files inside `summary_app/data/`.
+This keeps the app portable and allows standalone deployment.
+
+If bundled files are absent, the app falls back to the repository-level artifacts when available, including:
+
+- `data/experiment_exports/participants.csv`
+- `data/experiment_exports/trials.csv`
+- `data/experiment_exports/quiz_responses.csv`
+- `artifacts/frozen/final_cases.csv`
+- `artifacts/frozen/practice_cases.csv`
+- `artifacts/frozen/protocol_rotation.csv`
+
+This means the same code can run either:
+
+1. as a standalone deployed summary app with bundled data; or
+2. from the main capstone repository using exported artifacts.
 
 ## Run locally
 
-From the repo root:
+From the repository root:
 
 ```bash
 pip install -r codes/summary_app/requirements.txt
 streamlit run codes/summary_app/app.py
 ```
 
-Or from inside `codes/summary_app`:
+Or from inside `codes/summary_app/`:
 
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
 ```
 
-## Deploy
+## Deployment
 
-Deploy `codes/summary_app/app.py` on Streamlit Community Cloud from the repo or from a standalone synced repo.
-Make sure the required `artifacts/` files are present in the deployed repository.
+The app can be deployed from this folder as a standalone Streamlit app.
+Because it is read-only, it does not require Supabase credentials.
+The only optional configuration is a demo URL used for the "Launch 3-minute demo" button.
 
-## Optional demo link
 
-To show a button to the experiment platform demo, configure either:
+## Notes for the final submission
 
-```toml
-# .streamlit/secrets.toml
-demo_url = "https://your-demo-platform.streamlit.app"
-```
-
-or an environment variable:
-
-```bash
-SUMMARY_APP_DEMO_URL=https://your-demo-platform.streamlit.app
-```
-
-Do **not** link poster viewers to the real experiment platform unless it is in demo mode or uses a separate database/table.
-
-## Design principles
-
-- High contrast, light background, restrained palette.
-- Minimal chart decoration; direct labels and clear axes.
-- Cost is treated as the primary outcome; accuracy is secondary.
-- The app avoids GitHub/paper links for the poster session because those deliverables are not finalized yet.
+- This app is **supplementary** to the final paper and poster.
+- The authoritative statistical outputs for the final submission are the script-generated figures/tables in `artifacts/`.
+- The summary app is intended for interactive exploration and presentation, not as the primary reproducibility entrypoint.

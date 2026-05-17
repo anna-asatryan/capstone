@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import html
-import html
 from pathlib import Path
 from typing import Iterable
 

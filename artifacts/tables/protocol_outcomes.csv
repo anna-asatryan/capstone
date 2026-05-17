@@ -1,0 +1,4 @@
+protocol,label,mean_trial_cost,mean_accuracy,mean_optimal_cost,n_participants,n_trials
+no_ai,No AI,1.2216666666666667,0.5516666666666666,0.3333,100,600
+ai_first,AI-first,1.0116666666666665,0.635,0.3333,100,600
+human_first,Human-first,0.9233333333333333,0.6499999999999999,0.3333,100,600

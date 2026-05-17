@@ -1,237 +1,195 @@
 #!/usr/bin/env python3
-"""
-Capstone reproducibility entrypoint.
-
-    python run.py                   # reproduce final paper results (default)
-    python run.py --mode paper      # same as above
-    python run.py --mode summary    # launch summary visualisation app
-    python run.py --mode validate   # integrity checks on all frozen artifacts
-    python run.py --mode rebuild-design  # best-effort upstream rebuild (audit only)
-
-The single-command reproducibility rule:
-    `python run.py` reproduces the main paper results from frozen participant exports.
-"""
-
 from __future__ import annotations
 
 import argparse
 import subprocess
 import sys
+import webbrowser
 from pathlib import Path
 
-from codes.pipelines.common import ANALYSIS_DIR, ARTIFACTS_DIR, FROZEN_ARTIFACTS_DIR
-
 ROOT = Path(__file__).resolve().parent
-BUILD_DIR = ARTIFACTS_DIR / "build"
+DEPLOYED_SUMMARY_URL = "https://capstone-explorer.streamlit.app"
 
-
-# ---------------------------------------------------------------------------
-# Argument parsing
-# ---------------------------------------------------------------------------
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description=(
-            "Capstone reproducibility entrypoint. "
-            "Default: reproduce final paper results from frozen participant exports."
-        ),
-        formatter_class=argparse.RawTextHelpFormatter,
+        description="AUA DS 299 capstone reproducibility entrypoint."
     )
     parser.add_argument(
         "--mode",
-        choices=["paper", "summary", "validate", "rebuild-design"],
+        choices=["paper", "validate", "summary", "rebuild"],
         default="paper",
         help=(
-            "paper         : reproduce final paper results from frozen participant exports\n"
-            "summary       : launch the summary visualisation app\n"
-            "validate      : check integrity of all frozen artifacts\n"
-            "rebuild-design: best-effort upstream design rebuild (writes to artifacts/build/ only)"
+            "paper: reproduce final paper tables/figures from frozen artifacts and exports\n"
+            "validate: validate frozen artifacts, design, and exports\n"
+            "summary: open deployed summary app or launch local summary app\n"
+            "rebuild: optional upstream rebuild from data/raw/loan.csv"
         ),
     )
     parser.add_argument(
-        "--output-dir",
-        type=Path,
-        default=ANALYSIS_DIR,
-        help="Directory where analysis outputs are written (default: artifacts/analysis/latest/).",
+        "--interactive",
+        action="store_true",
+        help="Open an interactive mode-selection menu.",
+    )
+    parser.add_argument(
+        "--summary-target",
+        choices=["local", "deployed"],
+        default="local",
+        help=(
+            "For summary mode: 'local' launches Streamlit from this repo; "
+            "'deployed' opens the public deployed summary app."
+        ),
     )
     return parser.parse_args()
 
 
-# ---------------------------------------------------------------------------
-# Mode: paper
-# ---------------------------------------------------------------------------
+def choose_interactive_mode() -> tuple[str, str]:
+    print("=" * 60)
+    print("Capstone Reproducibility Pipeline")
+    print("=" * 60)
+    print("[1] paper     Reproduce final paper results")
+    print("[2] summary   Open/read the summary app")
+    print("[3] validate  Check frozen artifacts/design/exports")
+    print("[4] rebuild   Optional upstream rebuild from raw dataset")
+    print()
 
-def run_paper(output_dir: Path) -> Path:
+    choice = input("Select mode [1-4], or press Enter for paper: ").strip()
+
+    mode_map = {
+        "": "paper",
+        "1": "paper",
+        "2": "summary",
+        "3": "validate",
+        "4": "rebuild",
+    }
+
+    if choice not in mode_map:
+        raise SystemExit(f"Invalid choice: {choice}")
+
+    mode = mode_map[choice]
+    summary_target = "local"
+
+    if mode == "summary":
+        print()
+        print("[1] deployed  Open public deployed app")
+        print("[2] local     Launch local Streamlit app from this repo")
+        summary_choice = input("Select summary target [1-2], or press Enter for deployed: ").strip()
+        if summary_choice in ("", "1"):
+            summary_target = "deployed"
+        elif summary_choice == "2":
+            summary_target = "local"
+        else:
+            raise SystemExit(f"Invalid summary target: {summary_choice}")
+
+    return mode, summary_target
+
+
+def run_paper() -> None:
     from codes.pipelines.reproduce_paper import run_paper_reproduction
 
-    print("=" * 60)
-    print("Paper reproduction mode")
-    print("Loading frozen participant exports and frozen case design.")
-    print("=" * 60)
+    print("=" * 72)
+    print("MODE: PAPER REPRODUCTION")
+    print("=" * 72)
+    output = run_paper_reproduction()
+    print()
+    print(f"Paper outputs written to: {output}")
 
-    out = run_paper_reproduction(output_dir=output_dir.resolve())
-    return out
-
-
-# ---------------------------------------------------------------------------
-# Mode: summary
-# ---------------------------------------------------------------------------
-
-def _launch_summary_app(data_dir: Path) -> int:
-    command = [
-        sys.executable,
-        "-m",
-        "codes.summary_app.app",
-        "--data-dir",
-        str(data_dir),
-    ]
-    return subprocess.run(command, cwd=ROOT).returncode
-
-
-def run_summary(output_dir: Path) -> None:
-    analysis_dir = output_dir.resolve()
-    summary_json = analysis_dir / "summary.json"
-
-    if not summary_json.exists():
-        print(
-            f"No analysis bundle found at {analysis_dir}.\n"
-            "Running paper reproduction first...\n"
-        )
-        run_paper(analysis_dir)
-
-    print(f"\nLaunching summary app from {analysis_dir} ...")
-    raise SystemExit(_launch_summary_app(analysis_dir))
-
-
-# ---------------------------------------------------------------------------
-# Mode: validate
-# ---------------------------------------------------------------------------
 
 def run_validate() -> None:
     from codes.pipelines.validate_artifacts import validate_frozen_artifacts
-    from codes.pipelines.validate_experiment_design import (
-        validate_experiment_design,
-        validate_participant_exports,
-    )
+    from codes.pipelines.validate_experiment_design import validate_experiment_design
 
-    print("=" * 60)
-    print("Validate mode")
-    print("=" * 60)
+    print("=" * 72)
+    print("MODE: VALIDATION")
+    print("=" * 72)
 
-    # 1. Frozen artifact integrity (hashes + required columns + counts)
-    print("\n[1/3] Frozen artifact integrity...")
+    print("[1/2] Frozen artifact integrity")
     result = validate_frozen_artifacts()
     print(
-        f"      final_cases={result['final_cases']}  "
-        f"practice_cases={result['practice_cases']}  "
-        f"candidate_pool_rows={result['candidate_pool_rows']}"
+        "      OK: "
+        f"final_cases={result.get('final_cases')}  "
+        f"practice_cases={result.get('practice_cases')}  "
+        f"candidate_pool_rows={result.get('candidate_pool_rows'):,}"
     )
 
-    # 2. Experiment design structure + platform CSV sync + config.py
-    print("\n[2/3] Experiment design structure...")
+    print("[2/2] Experiment design, platform sync, and export schema")
     validate_experiment_design()
 
-    # 3. Participant export schema (skipped gracefully if not yet collected)
-    exports_dir = FROZEN_ARTIFACTS_DIR / "experiment_exports"
-    if (exports_dir / "participants.csv").exists() or (exports_dir / "trials.csv").exists():
-        print("\n[3/3] Participant export schema...")
-        problems = validate_participant_exports(exports_dir)
-        if problems:
-            print("  PARTICIPANT EXPORT WARNINGS:")
-            for p in problems:
-                print(f"    {p}")
-        else:
-            print("  Participant export schema OK.")
-    else:
-        print(
-            f"\n[3/3] Participant exports not found at {exports_dir} — "
-            "skipping (pre-data-collection)."
+    print()
+    print("Validation passed.")
+
+
+def run_summary(target: str = "local") -> None:
+    print("=" * 72)
+    print("MODE: SUMMARY APP")
+    print("=" * 72)
+
+    if target == "deployed":
+        print(f"Opening deployed summary app: {DEPLOYED_SUMMARY_URL}")
+        print("Note: this is for presentation/exploration; official reproduction is `python run.py`.")
+        webbrowser.open(DEPLOYED_SUMMARY_URL)
+        return
+
+    from codes.pipelines.reproduce_paper import run_paper_reproduction
+
+    print("[1/2] Regenerating paper outputs for local summary app")
+    output = run_paper_reproduction()
+    print(f"Paper outputs written to: {output}")
+
+    print("[2/2] Launching local Streamlit summary app")
+    print("      Local URL is usually http://localhost:8501")
+    print(f"      Deployed URL: {DEPLOYED_SUMMARY_URL}")
+
+    try:
+        subprocess.run(
+            [sys.executable, "-m", "streamlit", "run", "codes/summary_app/app.py"],
+            check=False,
         )
+    except KeyboardInterrupt:
+        print("\nSummary app stopped by user.")
 
-    print("\nAll validation checks passed.")
 
+def run_rebuild() -> None:
+    print("=" * 72)
+    print("MODE: OPTIONAL UPSTREAM REBUILD")
+    print("=" * 72)
+    print("This mode is provenance only. It is not the official paper reproduction path.")
+    print("It requires data/raw/loan.csv.")
+    print("It writes rebuilt upstream artifacts only under artifacts/build/.")
+    print("It never modifies artifacts/frozen/, data/experiment_exports/, artifacts/tables/, or artifacts/figures/.\n")
 
-# ---------------------------------------------------------------------------
-# Mode: rebuild-design
-# ---------------------------------------------------------------------------
-
-def run_rebuild_design(output_dir: Path) -> Path:
     from codes.pipelines.rebuild_from_upstream import run_rebuild_from_upstream
 
-    print("=" * 60)
-    print("Rebuild-design mode  [AUDIT / PROVENANCE ONLY]")
-    print()
-    print("This is NOT the official paper reproduction path.")
-    print("Outputs go to artifacts/build/ only.")
-    print("artifacts/frozen/ is never modified.")
-    print("=" * 60)
-    print()
+    try:
+        output = run_rebuild_from_upstream()
+    except RuntimeError as exc:
+        print("Rebuild could not run:")
+        print(exc)
+        return
 
-    out = run_rebuild_from_upstream(
-        analysis_output_dir=output_dir.resolve(),
-        rebuild_artifacts_dir=BUILD_DIR,
-    )
-    print(
-        "\nRebuild completed. Do not use rebuilt outputs as official results.\n"
-        "Run 'python run.py --mode validate' to confirm frozen artifacts are intact."
-    )
-    return out
+    print(f"\nRebuilt upstream outputs written to: {output}")
+    print("Frozen artifacts were not modified.")
 
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
 
 def main() -> None:
-    # Interactive menu if no arguments provided
-    if len(sys.argv) == 1:
-        print("=" * 60)
-        print("Capstone Reproducibility Pipeline")
-        print("=" * 60)
-        print("Select a mode to run:")
-        print("  [1] paper          (default) reproduce final paper results")
-        print("  [2] summary        launch summary visualisation app")
-        print("  [3] validate       check integrity of all frozen artifacts")
-        print("  [4] rebuild-design best-effort upstream design rebuild (audit only)")
-        print()
-        
-        try:
-            choice = input("Enter choice [1-4] or press Enter for default [1]: ").strip()
-        except KeyboardInterrupt:
-            print("\nExiting.")
-            sys.exit(1)
-            
-        mode_map = {
-            "": "paper",
-            "1": "paper",
-            "2": "summary",
-            "3": "validate",
-            "4": "rebuild-design",
-        }
-        
-        mode = mode_map.get(choice)
-        if not mode:
-            print(f"\nInvalid choice '{choice}'. Exiting.")
-            sys.exit(1)
-            
-        sys.argv.extend(["--mode", mode])
-
     args = parse_args()
-    output_dir: Path = args.output_dir
 
-    if args.mode == "paper":
-        out = run_paper(output_dir)
-        print(f"\nOutputs written to: {out}")
+    if args.interactive:
+        mode, summary_target = choose_interactive_mode()
+    else:
+        mode = args.mode
+        summary_target = args.summary_target
 
-    elif args.mode == "summary":
-        run_summary(output_dir)  # raises SystemExit
-
-    elif args.mode == "validate":
+    if mode == "paper":
+        run_paper()
+    elif mode == "summary":
+        run_summary(target=summary_target)
+    elif mode == "validate":
         run_validate()
-
-    elif args.mode == "rebuild-design":
-        out = run_rebuild_design(output_dir)
-        print(f"\nRebuild analysis outputs written to: {out}")
+    elif mode == "rebuild":
+        run_rebuild()
+    else:
+        raise SystemExit(f"Unknown mode: {mode}")
 
 
 if __name__ == "__main__":

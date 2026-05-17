@@ -55,26 +55,37 @@ Thumbs.db
 # Local/private project info
 # =========================================================
 CapstoneInfo/
-paper/
 outputs/
 
 # =========================================================
-# Data (large / non-versioned)
-# Keep placeholders only
+# Raw data: keep folder + README, ignore only large local raw files
 # =========================================================
-data/raw/*
+data/raw/loan.csv
+data/raw/lendingclub_raw_data.zip
+
+# Optional compressed raw-data variants
+data/raw/*.zip
+data/raw/*.tar
+data/raw/*.tar.gz
+data/raw/*.gz
+
+# Keep raw-data documentation and placeholders versioned
+!data/raw/README.md
 !data/raw/.gitkeep
 
-data/processed/*
-!data/processed/.gitkeep
-
-# Optional exported experiment data
-data/experiment/*
-!data/experiment/.gitkeep
+# If you decide LCDataDictionary.xlsx should stay local-only, uncomment:
+# data/raw/LCDataDictionary.xlsx
 
 # =========================================================
-# Quarto / paper rendering artifacts
-# Track source files, ignore generated files
+# Local databases / dumps
+# =========================================================
+*.sqlite
+*.sqlite3
+*.db
+
+# =========================================================
+# Quarto / LaTeX / paper rendering intermediates
+# Keep paper/ source and paper/paper.pdf trackable
 # =========================================================
 .quarto/
 **/.quarto/
@@ -82,7 +93,22 @@ data/experiment/*
 *_files/
 **/*_files/
 
-# Common rendered outputs
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+
+# =========================================================
+# Rendered scratch outputs
+# Do not ignore PDFs globally because paper/paper.pdf may be submitted
+# =========================================================
 *.html
-*.pdf
 *.docx

@@ -12,7 +12,7 @@ Checks beyond validate_artifacts.py:
   - config.py loads successfully
   - config.py case IDs match frozen CSV exactly
 
-If artifacts/db_exports/ exists, also validates:
+If data/experiment_exports/ exists, also validates:
   - required participant and trial columns are present
   - human_first init columns present when human_first trials exist
   - completed participants have 18 scored trials each
@@ -31,12 +31,28 @@ from pathlib import Path
 
 import pandas as pd
 
-from codes.pipelines.common import ARTIFACTS_DIR, FROZEN_ARTIFACTS_DIR
-from codes.pipelines.reproduce_paper import (
-    REQUIRED_PARTICIPANT_COLS,
-    REQUIRED_TRIAL_COLS,
-    _SCORED_BLOCKS,
-)
+from codes.pipelines.common import EXPERIMENT_EXPORTS_DIR, FROZEN_ARTIFACTS_DIR, SCORED_BLOCKS
+
+# Keep export-schema validation local to this module.
+# reproduce_paper.py intentionally mirrors analysis.ipynb and should not be a dependency
+# of validation logic.
+REQUIRED_PARTICIPANT_COLS = {
+    "id",
+    "participant_group",
+    "completed",
+}
+
+REQUIRED_TRIAL_COLS = {
+    "participant_id",
+    "trial_index",
+    "case_id",
+    "protocol",
+    "difficulty_tier",
+    "y_true",
+    "pred_prob",
+    "decision_final",
+    "prob_estimate_final",
+}
 
 _ROOT = Path(__file__).resolve().parents[2]
 _PLATFORM_FROZEN_DIR = _ROOT / "codes" / "experiment_platform" / "data" / "frozen"
@@ -177,7 +193,7 @@ def validate_participant_exports(
     Does not raise — caller decides how to handle warnings vs errors.
     If exports_dir doesn't exist or has no CSVs, returns [] (pre-data-collection is fine).
     """
-    exp_dir = exports_dir or (ARTIFACTS_DIR / "db_exports")
+    exp_dir = exports_dir or EXPERIMENT_EXPORTS_DIR
     participants_path = exp_dir / "participants.csv"
     trials_path = exp_dir / "trials.csv"
 
@@ -218,10 +234,14 @@ def validate_participant_exports(
             participants[participants["completed"].astype(bool)]["id"]
         )
         for pid in completed_ids:
-            scored = trials[
-                (trials["participant_id"] == pid)
-                & (trials["block"].isin(_SCORED_BLOCKS))
-            ]
+            participant_trials = trials[trials["participant_id"] == pid]
+            if "block" in participant_trials.columns:
+                scored = participant_trials[participant_trials["block"].isin(SCORED_BLOCKS)]
+            elif "trial_index" in participant_trials.columns:
+                scored = participant_trials[participant_trials["trial_index"] >= 1]
+            else:
+                scored = participant_trials
+
             if len(scored) != 18:
                 problems.append(
                     f"Participant {pid}: expected 18 scored trials, found {len(scored)}"

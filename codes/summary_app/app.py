@@ -93,10 +93,10 @@ def fmt_num(x: float, digits: int = 3) -> str:
 
 def plotly_chart_safe(fig, *, use_container_width=True, config=None, key=None):
     """
-    Render Plotly charts in a phone-safe way:
+    Render Plotly charts safely:
     - disables accidental zoom/pan interactions
-    - moves legends below the title/plot area
-    - adds enough margins so titles, legends, and axes do not overlap
+    - keeps legends away from plot content
+    - uses right-side legends on wide screens
     """
 
     safe_config = {
@@ -109,14 +109,12 @@ def plotly_chart_safe(fig, *, use_container_width=True, config=None, key=None):
     if config:
         safe_config.update(config)
 
-    # Force safer interaction on mobile.
     fig.update_layout(
         dragmode=False,
         hovermode="closest",
-        margin=dict(l=58, r=24, t=95, b=70),
+        margin=dict(l=58, r=190, t=85, b=70),
     )
 
-    # Make titles less likely to collide with legends.
     fig.update_layout(
         title=dict(
             x=0.0,
@@ -127,22 +125,20 @@ def plotly_chart_safe(fig, *, use_container_width=True, config=None, key=None):
         )
     )
 
-    # Put legend under the title but above the plot, horizontally.
-    # This prevents right-side legends from crushing the chart on phones.
     fig.update_layout(
         legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
+            orientation="v",
+            yanchor="top",
+            y=1.0,
             xanchor="left",
-            x=0.0,
+            x=1.02,
             font=dict(size=11),
-            bgcolor="rgba(255,255,255,0.72)",
+            bgcolor="rgba(255,255,255,0.86)",
             borderwidth=0,
+            itemwidth=30,
         )
     )
 
-    # Prevent axes labels from becoming huge/overlapping on phone.
     fig.update_xaxes(
         automargin=True,
         fixedrange=True,
@@ -156,16 +152,19 @@ def plotly_chart_safe(fig, *, use_container_width=True, config=None, key=None):
         title_font=dict(size=13),
     )
 
+    width = "stretch" if use_container_width else "content"
+
     st.plotly_chart(
         fig,
-        use_container_width=use_container_width,
+        width=width,
         config=safe_config,
         key=key,
     )
 
+
 def plotly_chart_safe_no_legend(fig, *, use_container_width=True, config=None, key=None):
     """
-    Use this for charts where the legend is too crowded on phones.
+    Use this for charts where the legend is too crowded or unnecessary.
     """
     fig.update_layout(showlegend=False)
     plotly_chart_safe(
@@ -438,7 +437,7 @@ if selected_tiers and "difficulty_tier" in view.columns:
     view = view[view["difficulty_tier"].astype(str).isin(selected_tiers)].copy()
 
 if view.empty:
-    hero("Human-AI Decision Explorer", "No analysis data found. Run from the capstone repo root or deploy with artifacts/db_exports available.")
+    hero("Human-AI Decision Explorer", "No analysis data found. Run from the capstone repo root or deploy with data/experiment_exports available.")
     st.stop()
 
 summary = protocol_summary(view)
@@ -599,11 +598,11 @@ def render_protocol_workflow_phone_safe() -> None:
         .wf-band {
             position: relative;
             width: 100%;
-            height: 118px;
+            height: 200px;
             margin-top: -8px;
             background-color: #eef5f4;
             background-size: cover;
-            background-position: center 54%;
+            background-position: center 50%;
             background-repeat: no-repeat;
             opacity: 1;
         }
@@ -741,7 +740,7 @@ def render_protocol_workflow_phone_safe() -> None:
     else:
         components.html(html, height=360, scrolling=False)
     if not HAI_IMAGE.exists():
-        st.caption("Human–AI image not found. Expected: assets/hai1.png")
+        st.caption("Human–AI image not found. Expected: assets/xf.png")
 
 
 def case_protocol_delta_heatmap_vertical(trials: pd.DataFrame, mode: str = "Cost benefit"):

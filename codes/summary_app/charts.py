@@ -189,8 +189,8 @@ def woa_histogram(df: pd.DataFrame, adjusters_only: bool = False, height: int = 
     )
     if len(d):
         fig.add_vline(x=0, line_dash="dash", line_width=1, line_color="#111827", annotation_text="ignore AI", annotation_position="top left")
-        fig.add_vline(x=d["woa"].mean(), line_width=2, line_color="#ea580c", annotation_text=f"mean {d['woa'].mean():.2f}", annotation_position="top right")
-        fig.add_vline(x=d["woa"].median(), line_width=2, line_color="#2563eb", annotation_text=f"median {d['woa'].median():.2f}", annotation_position="bottom right")
+        fig.add_vline(x=d["woa"].mean(), line_width=2, line_color="#C89A5B", annotation_text=f"mean {d['woa'].mean():.2f}", annotation_position="top right")
+        fig.add_vline(x=d["woa"].median(), line_width=2, line_color="#6F8FBF", annotation_text=f"median {d['woa'].median():.2f}", annotation_position="bottom right")
     fig = tufte_layout(fig, height=height, title="Weight of Advice distribution")
     fig.update_xaxes(title="WOA: movement from initial estimate toward AI prediction")
     fig.update_yaxes(title="Trials")
@@ -207,7 +207,7 @@ def reliance_stacked_bar(rel: pd.DataFrame, height: int = 340) -> go.Figure:
         "Harmful override": "Deviated — model action agreed with outcome",
     }
     cols = ["Beneficial reliance", "Over-reliance", "Beneficial override", "Harmful override"]
-    colors = ["#059669", "#dc2626", "#2563eb", "#ea580c"]
+    colors = ["#3F8F83", "#C46E6E", "#6F8FBF", "#C89A5B"]
     fig = go.Figure()
     for col, color in zip(cols, colors):
         label = display_names[col]
@@ -223,7 +223,7 @@ def ai_benefit_histogram(df: pd.DataFrame, height: int = 320) -> go.Figure:
         return go.Figure()
     d = df.dropna(subset=["ai_benefit_accuracy"])
     fig = go.Figure()
-    fig.add_trace(go.Histogram(x=d["ai_benefit_accuracy"], nbinsx=22, marker_color="#2563eb", opacity=0.82))
+    fig.add_trace(go.Histogram(x=d["ai_benefit_accuracy"], nbinsx=22, marker_color="#6F8FBF", opacity=0.82))
     fig.add_vline(x=0, line_dash="dash", line_color="#111827", annotation_text="no benefit")
     fig.add_vline(x=0.20, line_dash="dash", line_color="#059669", annotation_text="large benefit")
     fig = tufte_layout(fig, height=height, title="Individual heterogeneity in AI benefit")
