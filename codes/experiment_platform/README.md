@@ -155,16 +155,23 @@ Security rule:
 
 ### 4.3 Install dependencies and run locally
 
+From the repository root:
+
 ```bash
-python -m venv .venv
+python3.11 -m venv .venv
 source .venv/bin/activate      # macOS/Linux
 # .venv\Scripts\activate       # Windows
 
 pip install -r requirements.txt
-streamlit run app.py
+streamlit run codes/experiment_platform/app.py
 ```
 
-The app opens at `http://localhost:8501`.
+Or, from inside codes/experiment_platform/:
+
+```bash
+cd codes/experiment_platform
+streamlit run app.py
+```
 
 ---
 

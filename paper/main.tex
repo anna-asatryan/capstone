@@ -39,32 +39,30 @@
 % ---------------------------------------------------------------
 % ABSTRACT  
 % ---------------------------------------------------------------
+
 \begin{abstract}
 Predictive models used in decision support are often evaluated as
-standalone classifiers, but deployment outcomes depend on how people
-incorporate model outputs into decisions under task constraints. This
-paper investigates whether the timing of AI advice changes human--AI
-decision quality in a cost-sensitive loan task. A web-based
-within-subject experiment compared three protocols---no~AI, AI-first
-(AI probability shown before the human decides), and human-first (AI
-probability revealed after an initial human judgment, allowing
-revision)---using a calibrated logistic regression model held fixed
-across all conditions. One hundred participants completed 1,800 scored
-trials under asymmetric penalties: approving a defaulter cost five units
-and rejecting a creditworthy applicant cost one unit. Both AI-assisted
-protocols significantly reduced mean trial cost relative to no~AI:
-AI-first by 0.210 units ($p = 0.017$, $d = 0.243$) and human-first by
-0.298 units ($p < 0.001$, $d = 0.385$). The direct timing contrast was
-not statistically decisive ($\Delta = 0.088$, $p = 0.178$, $d =
-0.136$). In human-first trials, AI exposure corrected 90 initial errors
-versus 32 it introduced. Weight-of-advice analysis revealed polarized
-reliance: 52.5\% of trials showed no probability adjustment, while
-adjusted trials moved strongly toward the AI estimate (median WOA $=
-0.869$). Although the sample was predominantly young non-experts
-completing an 18-trial session, limiting external validity to
-professional settings, the findings support a system-level view:
-realized decision value depends not only on model quality but also on
-interaction structure, cost framing, and selective revision behavior.
+standalone classifiers, but deployment outcomes depend on how people use
+model outputs under task constraints. This paper tests whether AI-advice
+timing changes human--AI decision quality in a cost-sensitive loan task.
+A web-based within-subject experiment compared three protocols---no~AI,
+AI-first, and human-first---using a calibrated logistic regression model
+held fixed across conditions. One hundred participants completed 1,800
+scored trials under asymmetric penalties: approving a defaulter cost five
+units and rejecting a creditworthy applicant cost one unit. Both
+AI-assisted protocols significantly reduced mean trial cost relative to
+no~AI: AI-first by 0.210 units ($p = 0.017$, $d = 0.243$) and
+human-first by 0.298 units ($p < 0.001$, $d = 0.385$). The direct timing
+contrast was not statistically decisive ($\Delta = 0.088$, $p = 0.178$,
+$d = 0.136$). In human-first trials, AI exposure corrected 90 initial
+errors versus 32 it introduced. Weight-of-advice analysis showed
+polarized reliance: 52.5\% of trials showed no probability adjustment,
+while adjusted trials moved strongly toward the AI estimate (median WOA
+$= 0.869$). Although the sample was predominantly young non-experts in
+an 18-trial session, limiting external validity to professional settings,
+the findings support a system-level view: realized decision value depends
+not only on model quality but also on interaction structure, cost
+framing, and selective revision behavior.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -100,21 +98,16 @@ independent reasoning before advice exposure, but it may also create
 inertia that makes users less willing to adjust when the model is
 correct.
 
-The question matters practically because advice timing changes the
-cognitive task. A probability displayed before a judgment becomes an
-initial reference point. The same probability displayed after an initial
-judgment becomes advice that can be accepted, ignored, or used to revise.
-These are different interaction structures even when the underlying model
-and displayed information are identical.
-
+The question matters because prior work has studied algorithmic advice,
+overreliance, and cognitive forcing, but has less often isolated advice
+timing itself. A probability shown before judgment becomes an initial
+reference point; the same probability shown after judgment becomes advice
+that can be accepted, ignored, or used to revise. Thus, AI-first and
+human-first are distinct interaction structures even when the model and
+displayed information are held constant.
 
 The study addresses three research questions. RQ1 asks whether AI
-probability support improves cost-sensitive decision quality relative to
-unaided human judgment. RQ2 asks whether advice timing changes realized
-decision quality when the model, cases, and information content are held
-constant. RQ3 asks, within the human-first workflow, whether AI exposure
-corrects more initial errors than it introduces and how strongly users
-move toward the AI estimate.
+probability support improves cost-sensitive decision quality relative to unaided human judgment. RQ2 asks whether advice timing changes realized decision quality when the model, cases, and information content are held constant. RQ3 asks whether, in the human-first workflow, AI exposure corrects more initial errors than it introduces and how strongly users move toward the AI estimate. 
 
 We evaluate advice timing in a loan approval task that exemplifies the
 human-centered AI research agenda~\cite{steyvers2024three}.
@@ -449,9 +442,8 @@ directory; the official experimental snapshot was stored separately as
 frozen case files with a lock file (\texttt{cases.lock.json}) and
 integrity validation. The submitted repository separates the official
 behavioral reproduction from the optional upstream raw-data rebuild. The command \texttt{python run.py} regenerates the final reported tables, figures, and summary from
-\texttt{data/experiment\_exports/} and \texttt{artifacts/frozen/}. It
-requires no raw LendingClub file, no manual notebook execution, no
-Supabase credentials, and no manual figure editing. The raw file
+\texttt{data/experiment\_exports/} and \texttt{artifacts/frozen/}. All paper figures are generated programmatically by the reproduction
+pipeline and copied into the paper source without manual editing. The raw file
 \texttt{data/raw/loan.csv} is needed only for the optional provenance
 command \texttt{python run.py --mode rebuild}, which writes to
 \texttt{artifacts/build/} and does not modify the frozen experimental
@@ -805,6 +797,14 @@ The case-level cost pattern is shown in Fig.~\ref{fig:case_scatter}.
     $\tau=1/6$.}
   \label{fig:case_scatter}
 \end{figure}
+
+\subsection{Validation Limits}
+
+The validation evidence has three main limits: the sample was young and
+non-expert, each participant completed only 18 scored trials, and the
+mixed-effects model did not converge. Therefore, the results should be
+read as controlled evidence about interaction design, with the fuller
+generalizability and power limits discussed in Section~\ref{sec:discussion}.
 
 % ---------------------------------------------------------------
 \section{Discussion and Conclusion}
