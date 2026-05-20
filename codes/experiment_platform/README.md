@@ -68,8 +68,7 @@ experiment_platform/
 ├── README.md                      # this file
 ├── ARCHITECTURE.md                # module/data-flow documentation
 ├── requirements.txt               # pip dependencies
-├── pyproject.toml                 # project metadata / uv config
-├── uv.lock                        # locked environment from uv
+├── pyproject.toml                 # project metadata 
 ├── .gitignore
 ├── .streamlit/
 │   ├── config.toml                # Streamlit theme/config

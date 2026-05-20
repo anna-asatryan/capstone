@@ -1,8 +1,14 @@
 # DS 299 Capstone — Human-AI Decision Support in Cost-Sensitive Loan Decisions
 
-Repository: https://github.com/anna-asatryan/capstone
-
 This repository contains the code, frozen experiment artifacts, exported behavioral data, generated analysis outputs, Streamlit apps, and paper source for an AUA DS 299 capstone project on human-AI decision support. The study tests whether the timing of AI advice changes decision quality and reliance in a cost-sensitive loan decision task.
+
+## Important links and entry points
+
+| Item | Link |
+|---|---|
+| GitHub repository | https://github.com/anna-asatryan/capstone |
+| Deployed summary app | https://capstone-explorer.streamlit.app |
+| Deployed experiment platform | https://capstone-study.streamlit.app|
 
 Participants completed a within-subject experiment with three protocols:
 
@@ -23,6 +29,28 @@ python run.py
 ```
 
 This regenerates the final behavioral tables, figures, and summary from included frozen experiment artifacts and exported participant data. It does **not** require the raw LendingClub CSV, processed modeling CSV, Supabase credentials, Streamlit apps, manual notebook execution, or manual figure editing.
+
+
+## Getting the project
+
+You can work from either the GitHub repository or the submitted ZIP archive.
+
+### Option A: GitHub repository
+
+Clone the repository and enter the project root:
+
+```bash
+git clone https://github.com/anna-asatryan/capstone.git
+cd capstone
+```
+
+### Option B: Submitted ZIP archive
+
+Unzip the submitted archive, then enter the extracted project folder:
+
+```
+cd Anna_Asatryan_DS299
+```
 
 ### macOS / Linux
 
